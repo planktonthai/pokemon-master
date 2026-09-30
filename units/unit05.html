@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第 5 關：攻擊與傷害｜寶可夢卡牌訓練營</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🃏</text></svg>">
+<link rel="stylesheet" href="../assets/css/style.css">
+<style></style>
+</head>
+<body data-bgm="bgm_canyon" data-zone="canyon">
+<div class="wrap">
+  <div class="topbar">
+    <a class="btn" href="../index.html?zone=canyon">🗺 回地圖</a>
+    <span class="star-pill" aria-live="polite"></span>
+  </div>
+  <header class="unit-head">
+    <span class="tag" style="background:var(--canyon)">進階山谷・第 5 關</span>
+    <h1>攻擊與傷害</h1>
+    <p>學會使出招式、計算傷害，看懂弱點和抗性，就能打出最有效的攻擊！</p>
+  </header>
+
+  <section class="lesson" id="L1" data-partner="cloud" data-intro="皮卡丘要攻擊小火龍了！">
+    <h2><span class="no">1</span>使出招式的步驟</h2>
+    <p>攻擊前要確認能量，攻擊後要放傷害指示物。</p>
+    <div class="stage " id="s1"></div>
+    <div class="caption" aria-live="polite"><span class="txt"></span></div>
+    <div class="controls"></div>
+  </section>
+  <section class="lesson" id="L2" data-partner="fruit" data-intro="同一招，打不同的寶可夢，傷害可能不一樣喔！">
+    <h2><span class="no">2</span>弱點和抗性</h2>
+    <p>屬性相剋會讓傷害變多或變少。</p>
+    <div class="stage " id="s2"></div>
+    <div class="caption" aria-live="polite"><span class="txt"></span></div>
+    <div class="controls"></div>
+  </section>
+  <section class="lesson" id="L3" data-partner="snail" data-intro="傷害累積到 HP 用完，會發生什麼事？">
+    <h2><span class="no">3</span>昏厥與換上場</h2>
+    <p>HP 用完就會昏厥，對手可以拿獎賞卡。</p>
+    <div class="stage " id="s3"></div>
+    <div class="caption" aria-live="polite"><span class="txt"></span></div>
+    <div class="controls"></div>
+  </section>
+  <section class="lesson">
+    <h2><span class="no">🎮</span>傷害計算大挑戰</h2>
+    <p>看清楚招式傷害、弱點和抗性，算出正確的傷害！</p>
+    <div class="game" id="game"></div>
+  </section>
+  <section class="lesson">
+    <h2><span class="no">★</span>過關小測驗</h2>
+    <div class="quiz" id="quiz"></div>
+  </section>
+</div>
+
+<script src="../assets/js/audio.js"></script>
+<script src="../assets/js/common.js"></script>
+<script>
+(() => {
+  const { card, mini, sparkle, restart, Player } = PTCG;
+  PTCG.clouds();
+  PTCG.twinkles(document.querySelector('.unit-head'), 4);
+  PTCG.starPill(document.querySelector('.star-pill'));
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+  const hz = (stage, z) => { $$('.zone-box', stage).forEach(b => b.classList.toggle('hl', b.dataset.z === z)); };
+  const put = (el, html) => { el.insertAdjacentHTML('beforeend', html); const n = el.lastElementChild; if (!PTCG.fast) restart(n, 'pop-in'); return n; };
+  function matHTML(cls = '') {
+    return `<div class="mat ${cls}">
+      <div class="zone-box prize" data-z="prize"><span class="lbl">獎賞卡</span></div>
+      <div class="zone-box active" data-z="active"><span class="lbl">戰鬥場</span></div>
+      <div class="zone-box deck" data-z="deck"><span class="lbl">牌庫</span></div>
+      <div class="zone-box bench" data-z="bench"><span class="lbl">備戰區（最多 5 隻）</span></div>
+      <div class="zone-box discard" data-z="discard"><span class="lbl">棄牌區</span></div>
+    </div>`;
+  }
+  const nextHref = n => PTCG.AVAILABLE.includes('u' + n) ? 'unit' + String(n).padStart(2, '0') + '.html' : null;
+
+  const F = PTCG;
+  const PIKA = { kind: 'pokemon', stage: '基礎', name: '皮卡丘', hp: 60, type: '雷', attacks: [{ cost: ['雷'], name: '電擊', dmg: 20 }, { cost: ['雷', '無色'], name: '電球', dmg: 50 }], weak: '鬥', retreat: 1 };
+  const CHAR = { kind: 'pokemon', stage: '基礎', name: '小火龍', hp: 70, type: '火', attacks: [{ cost: ['火'], name: '火花', dmg: 30 }], weak: '水', retreat: 1 };
+  const SQUI = { kind: 'pokemon', stage: '基礎', name: '傑尼龜', hp: 60, type: '水', attacks: [{ cost: ['水'], name: '水槍', dmg: 30 }], weak: '雷', retreat: 1 };
+  const BULB = { kind: 'pokemon', stage: '基礎', name: '妙蛙種子', hp: 70, type: '草', attacks: [{ cost: ['草'], name: '藤鞭', dmg: 40 }], weak: '火', retreat: 2 };
+  const BELD = { kind: 'pokemon', stage: '基礎', name: '鐵啞鈴', hp: 70, type: '鋼', attacks: [{ cost: ['鋼'], name: '撞擊', dmg: 20 }], weak: '火', resist: '草', retreat: 2 };
+  const hl = (root, part) => { root.querySelectorAll('.hl').forEach(e => e.classList.remove('hl')); if (part) { const e = root.querySelector(part); e && e.classList.add('hl'); } };
+
+  /* ===== 動畫 1：使出招式 ===== */
+  const s1 = $('#s1');
+  new Player($('#L1'), {
+    reset() { s1.innerHTML = `<div class="duel">${F.fighter(PIKA, 'a1')}${F.fighter(CHAR, 'd1')}</div>`; },
+    steps: [
+      { sfx: 'energy_attach', say: '第一步：確認能量夠不夠。「電擊」只要 1 個雷能量，皮卡丘身上有！', dur: 4200, run() { hl(s1, '#a1 [data-part=cost0]'); } },
+      { sfx: 'attack_zap', say: '第二步：大聲說出招式名稱——「電擊」！', dur: 3200, run() { hl(s1, '#a1 [data-part=atk0]'); F.lunge($('#a1', s1), 1); } },
+      { say: '第三步：對手受到 20 點傷害，在牠身上放傷害指示物。', dur: 4000, run() { hl(s1); F.damage($('#d1', s1), 20); } },
+      { sfx: 'card_place', say: '1 個紅色指示物代表 10 點傷害。傷害很多時，也可以用 50 點的大指示物。', dur: 4600, run() { $$('#d1 .dc', s1).forEach((d, i) => this.wait(() => PTCG.restart(d, 'jump'), i * 200)); } },
+      { sfx: 'star', say: '小火龍 HP 70，受到 20 點傷害，還剩 50。攻擊完，回合就結束囉！', dur: 4600, run() { PTCG.restart($('#d1 .hptext', s1), 'jump'); } }
+    ]
+  });
+
+  /* ===== 動畫 2：弱點與抗性 ===== */
+  const s2 = $('#s2');
+  const fx = (i, on = true) => { const e = $$('.formula .fx', s2)[i]; e && e.classList.toggle('on', on); };
+  new Player($('#L2'), {
+    reset() { s2.innerHTML = `<div style="width:100%"><div class="duel" id="duel2">${F.fighter(SQUI, 'a2')}${F.fighter(CHAR, 'd2')}</div>
+      <div class="formula"><span class="fx">招式 30</span><span class="op">→</span><span class="fx">弱點 ×2</span><span class="op">→</span><span class="fx">抗性 −30</span><span class="op">=</span><span class="fx res">?</span></div></div>`; },
+    steps: [
+      { sfx: 'card_draw', say: '傑尼龜用「水槍」攻擊小火龍，招式傷害是 30。', dur: 3800, run() { fx(0); hl(s2, '#a2 [data-part=atk0]'); } },
+      { sfx: 'card_draw', say: '看小火龍的「弱點」：是水！被水屬性攻擊，傷害要乘以 2。', dur: 4400, run() { fx(1); hl(s2, '#d2 [data-part=weak]'); } },
+      { sfx: 'attack_water', say: '30 × 2 = 60！傷害變成兩倍，好痛！', dur: 4000, run() { hl(s2); $$('.formula .fx', s2)[3].textContent = '60'; fx(3); F.lunge($('#a2', s2), 1); this.wait(() => F.damage($('#d2', s2), 60, '-60 弱點!'), 300); } },
+      { sfx: 'card_flip', say: '換一組：妙蛙種子用「藤鞭」40 攻擊鐵啞鈴。', dur: 4000,
+        run() { $('#duel2', s2).innerHTML = F.fighter(BULB, 'a3') + F.fighter(BELD, 'd3'); $$('.formula .fx', s2).forEach(e => e.classList.remove('on')); $$('.formula .fx', s2)[0].textContent = '招式 40'; $$('.formula .fx', s2)[3].textContent = '?'; fx(0); } },
+      { sfx: 'card_draw', say: '鐵啞鈴有「抗性」：被草屬性攻擊時，傷害減少 30。', dur: 4200, run() { fx(2); hl(s2, '#d3 [data-part=resist]'); } },
+      { sfx: 'attack_hit', say: '40 − 30 = 10。抗性讓傷害變少了！', dur: 4000, run() { hl(s2); $$('.formula .fx', s2)[3].textContent = '10'; fx(3); F.lunge($('#a3', s2), 1); this.wait(() => F.damage($('#d3', s2), 10, '-10 抗性'), 300); } },
+      { sfx: 'star', say: '記住順序：先算招式傷害，再算弱點 ×2，最後才減抗性。', dur: 4600, run() { [0, 1, 2, 3].forEach(i => fx(i)); } }
+    ]
+  });
+
+  /* ===== 動畫 3：昏厥 ===== */
+  const s3 = $('#s3');
+  new Player($('#L3'), {
+    reset() {
+      s3.innerHTML = `<div style="width:100%;display:flex;flex-direction:column;align-items:center;gap:10px"><div class="duel">${F.fighter(PIKA, 'a4')}${F.fighter(SQUI, 'd4')}</div>
+        <div class="prize-row" id="pz">${mini({ back: 1 }).repeat(6)}</div></div>`;
+      $('#d4', s3).dataset.dmg = 20; F.paintHP($('#d4', s3));
+    },
+    steps: [
+      { sfx: 'card_draw', say: '傑尼龜 HP 60，已經受到 20 點傷害，還剩 40。', dur: 4000, run() { PTCG.restart($('#d4 .hptext', s3), 'jump'); } },
+      { sfx: 'attack_zap', say: '皮卡丘用「電球」50 攻擊！而且傑尼龜的弱點是雷……', dur: 4000, run() { hl(s3, '#d4 [data-part=weak]'); F.lunge($('#a4', s3), 1); } },
+      { say: '50 × 2 = 100！傷害超過剩下的 HP，傑尼龜昏厥了！', dur: 4400, run() { hl(s3); F.damage($('#d4', s3), 100, '-100!'); } },
+      { sfx: 'star', say: '擊倒對手 1 隻寶可夢，就可以拿走 1 張自己的獎賞卡！', dur: 4200, run() { const m = $('#pz .mini', s3); m && m.classList.add('taken'); } },
+      { sfx: 'card_place', say: '昏厥的寶可夢和牠身上的卡都放進棄牌區，對手再從備戰區選 1 隻上場。', dur: 5000, run() { const d = $('#d4', s3); d.style.transition = 'opacity .6s,transform .6s'; d.style.opacity = '0'; d.style.transform = 'translateY(40px) scale(.7)'; } }
+    ]
+  });
+
+  /* ===== 小遊戲 ===== */
+  const vs = (a, d) => `<div class="duel" style="transform:scale(.72);transform-origin:50% 0;margin-bottom:-90px">${card(a)}${card(d)}</div>`;
+  PTCG.choiceGame($('#game'), { rounds: [
+    { visual: vs(SQUI, CHAR), q: '傑尼龜用「水槍」30 攻擊小火龍（弱點：水），傷害是多少？', opts: ['30', '60', '0'], a: 1, why: '弱點 ×2：30 × 2 = 60。' },
+    { visual: vs(BULB, BELD), q: '妙蛙種子用「藤鞭」40 攻擊鐵啞鈴（抗性：草 −30），傷害是多少？', opts: ['10', '40', '70'], a: 0, why: '抗性 −30：40 − 30 = 10。' },
+    { visual: vs(PIKA, CHAR), q: '皮卡丘用「電擊」20 攻擊小火龍（弱點：水），傷害是多少？', opts: ['20', '40', '10'], a: 0, why: '小火龍的弱點是水，不是雷，所以傷害不變，還是 20。' },
+    { visual: vs(CHAR, BELD), q: '小火龍用「火花」30 攻擊鐵啞鈴（弱點：火），傷害是多少？', opts: ['30', '0', '60'], a: 2, why: '鐵啞鈴的弱點是火：30 × 2 = 60。' },
+    { q: '妙蛙種子 HP 70，已經有 3 個傷害指示物（30 點），再受到 40 點傷害會怎樣？', opts: ['還剩 10', '剛好昏厥', '還剩 40'], a: 1, why: '30 + 40 = 70，剛好等於 HP，所以昏厥了。' }
+  ] });
+
+  PTCG.quiz($('#quiz'), 'u5', [
+    { q: '1 個一般的傷害指示物代表多少傷害？', opts: ['1 點', '10 點', '50 點', '100 點'], a: 1, why: '1 個代表 10 點，另外也有 50 點、100 點的指示物。' },
+    { q: '被「弱點」屬性攻擊時，傷害會怎樣？', opts: ['減少 30', '變成 2 倍', '不變', '變成 0'], a: 1, why: '弱點會讓傷害 ×2。' },
+    { q: '招式 40 點，對手有抗性 −30，傷害是多少？', opts: ['70', '40', '10', '80'], a: 2, why: '40 − 30 = 10。' },
+    { q: '計算傷害時，弱點和抗性哪個先算？', opts: ['先算弱點', '先算抗性', '一起算'], a: 0, why: '先算弱點 ×2，再減抗性。' },
+    { q: '寶可夢受到的傷害等於或超過 HP 時，會怎樣？', opts: ['回到手牌', '昏厥', '變成備戰區', '什麼都不會發生'], a: 1, why: 'HP 用完就昏厥。' },
+    { q: '擊倒對手 1 隻一般的寶可夢後，你可以做什麼？', opts: ['再攻擊一次', '拿 1 張自己的獎賞卡', '拿對手的手牌', '多抽 3 張牌'], a: 1, why: '拿 1 張自己的獎賞卡。' }
+  ], nextHref(6), 'cloud');
+
+})();
+</script>
+</body>
+</html>

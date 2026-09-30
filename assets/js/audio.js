@@ -7,7 +7,7 @@
    瀏覽器規定要使用者先點過畫面才能發出聲音，本模組會自動等第一次點擊。 */
 const PTCGAudio = (() => {
   const KEY = 'ptcg-camp-audio-v1';
-  const LOOPS = { bgm_grassland: 32 * 4 * 60 / 140 };   // 背景音樂的循環長度（秒）
+  const LOOPS = { bgm_grassland: 32 * 4 * 60 / 140, bgm_canyon: 32 * 4 * 60 / 132 };   // 背景音樂的循環長度（秒）
   let base = 'assets/audio/';
   const inline = {};          // 單檔版：直接內嵌的音檔
   const buffers = {};         // 已解碼的音效
@@ -86,6 +86,7 @@ const PTCGAudio = (() => {
     current = null;
   }
   function music(name) {
+    if (name && current && current.name === name) { wantMusic = name; return; }
     wantMusic = name;
     if (!name) { stopMusic(); return; }
     if (unlocked && !set.muted) startMusic(name);

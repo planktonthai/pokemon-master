@@ -804,7 +804,7 @@
 
     /* 目前所在區域 */
     let zn = 'grass', zd = 1e9; for (const k in ZONE_C) { const d = cam.target.distanceTo(ZONE_C[k]); if (d < zd) { zd = d; zn = k; } }
-    if (zonePill.dataset.z !== zn) { zonePill.dataset.z = zn; zonePill.className = 'zone-pill ' + zn; zonePill.textContent = { grass: '🌱 新手草原', canyon: '🏜️ 進階山谷', volcano: '🌋 高手火山' }[zn]; }
+    if (zonePill.dataset.z !== zn) { zonePill.dataset.z = zn; zonePill.className = 'zone-pill ' + zn; zonePill.textContent = { grass: '🌱 新手草原', canyon: '🏜️ 進階山谷', volcano: '🌋 高手火山' }[zn]; if (typeof PTCGAudio !== 'undefined') PTCGAudio.music(zn === 'canyon' ? 'bgm_canyon' : 'bgm_grassland'); }
     /* 標籤位置（重疊時往上錯開） */
     const placed = [];
     GYMS.map(G => { v.set(G.pos.x, G.arena ? 12 : 9.6, G.pos.z).project(camera); return { G, x: (v.x * .5 + .5) * innerWidth, y: (-v.y * .5 + .5) * innerHeight, z: v.z }; })

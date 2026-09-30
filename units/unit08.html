@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第 8 關：獲勝條件｜寶可夢卡牌訓練營</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🃏</text></svg>">
+<link rel="stylesheet" href="../assets/css/style.css">
+<style>
+  .win3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:780px}
+  .win3 .w{background:#fff;border:3px solid var(--ink);border-radius:18px;box-shadow:0 5px 0 var(--ink);padding:12px;text-align:center;opacity:.25;transition:opacity .5s,transform .5s var(--pop)}
+  .win3 .w.on{opacity:1;transform:translateY(-6px);background:#FFF6C8}
+  .win3 .w b{display:block;font-size:40px}
+  .win3 .w .demo{min-height:96px;display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap;margin:6px 0}
+  .win3 .w .demo .mini{width:40px;height:56px}
+  .win3 .w .demo .mini::before{top:16px;height:16px}
+  .tally{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%}
+  .tally .ko-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+  .tally .ko{background:#fff;border:3px solid var(--ink);border-radius:14px;padding:6px 12px;font-size:17px;box-shadow:0 4px 0 var(--ink);opacity:.25;transition:opacity .4s,transform .4s var(--pop)}
+  .tally .ko.on{opacity:1;transform:translateY(-4px)}
+  .tally .count{font-family:'Noto Sans TC';font-weight:900;font-size:40px;color:#fff;-webkit-text-stroke:2px var(--ink);paint-order:stroke fill}
+  .winner{font-family:'Noto Sans TC';font-weight:900;font-size:44px;color:var(--sun);-webkit-text-stroke:3px var(--ink);paint-order:stroke fill;animation:popIn .6s var(--pop)}
+  @media (max-width:640px){ .win3{grid-template-columns:1fr} }
+</style>
+</head>
+<body data-bgm="bgm_canyon" data-zone="canyon">
+<div class="wrap">
+  <div class="topbar">
+    <a class="btn" href="../index.html?zone=canyon">🗺 回地圖</a>
+    <span class="star-pill" aria-live="polite"></span>
+  </div>
+  <header class="unit-head">
+    <span class="tag" style="background:var(--canyon)">進階山谷・第 8 關</span>
+    <h1>獲勝條件</h1>
+    <p>比賽有三種獲勝方式！學會計算獎賞卡，就知道還差多少才能贏。</p>
+  </header>
+
+  <section class="lesson" id="L1" data-partner="cloud" data-intro="怎麼樣才算贏呢？有三種方法！">
+    <h2><span class="no">1</span>三種獲勝方式</h2>
+    <p>只要做到其中一種，你就贏了！</p>
+    <div class="stage " id="s1"></div>
+    <div class="caption" aria-live="polite"><span class="txt"></span></div>
+    <div class="controls"></div>
+  </section>
+  <section class="lesson" id="L2" data-partner="fruit" data-intro="我們來算算看，要擊倒幾隻才能拿完 6 張！">
+    <h2><span class="no">2</span>算算獎賞卡</h2>
+    <p>擊倒不同的寶可夢，拿到的獎賞卡張數不一樣。</p>
+    <div class="stage " id="s2"></div>
+    <div class="caption" aria-live="polite"><span class="txt"></span></div>
+    <div class="controls"></div>
+  </section>
+  <section class="lesson">
+    <h2><span class="no">🎮</span>還差幾張？</h2>
+    <p>算算看還要拿幾張獎賞卡，或誰會贏！</p>
+    <div class="game" id="game"></div>
+  </section>
+  <section class="lesson">
+    <h2><span class="no">★</span>過關小測驗</h2>
+    <div class="quiz" id="quiz"></div>
+  </section>
+</div>
+
+<script src="../assets/js/audio.js"></script>
+<script src="../assets/js/common.js"></script>
+<script>
+(() => {
+  const { card, mini, sparkle, restart, Player } = PTCG;
+  PTCG.clouds();
+  PTCG.twinkles(document.querySelector('.unit-head'), 4);
+  PTCG.starPill(document.querySelector('.star-pill'));
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+  const hz = (stage, z) => { $$('.zone-box', stage).forEach(b => b.classList.toggle('hl', b.dataset.z === z)); };
+  const put = (el, html) => { el.insertAdjacentHTML('beforeend', html); const n = el.lastElementChild; if (!PTCG.fast) restart(n, 'pop-in'); return n; };
+  function matHTML(cls = '') {
+    return `<div class="mat ${cls}">
+      <div class="zone-box prize" data-z="prize"><span class="lbl">獎賞卡</span></div>
+      <div class="zone-box active" data-z="active"><span class="lbl">戰鬥場</span></div>
+      <div class="zone-box deck" data-z="deck"><span class="lbl">牌庫</span></div>
+      <div class="zone-box bench" data-z="bench"><span class="lbl">備戰區（最多 5 隻）</span></div>
+      <div class="zone-box discard" data-z="discard"><span class="lbl">棄牌區</span></div>
+    </div>`;
+  }
+  const nextHref = n => PTCG.AVAILABLE.includes('u' + n) ? 'unit' + String(n).padStart(2, '0') + '.html' : null;
+
+  /* ===== 動畫 1：三種獲勝方式 ===== */
+  const s1 = $('#s1');
+  const W = [
+    ['🎁', '拿完 6 張獎賞卡', `<div class="prize-row" id="pw">${mini({ back: 1 }).repeat(6)}</div>`],
+    ['🚫', '對手場上沒有寶可夢', `<div id="ow">${mini({ name: '小火龍', type: '火', hp: 70 })}</div><span style="font-size:28px">＋</span><span style="font-size:15px">備戰區<br>空空的</span>`],
+    ['📭', '對手回合開始時，牌庫沒牌可抽', `<div class="stack" id="dw">${mini({ back: 1 }).repeat(2)}</div>`]
+  ];
+  const on = i => $$('.w', s1).forEach((w, k) => w.classList.toggle('on', k === i));
+  new Player($('#L1'), {
+    reset() { s1.innerHTML = '<div class="win3">' + W.map(w => `<div class="w"><b>${w[0]}</b><div class="demo">${w[2]}</div>${w[1]}</div>`).join('') + '</div>'; },
+    steps: [
+      { sfx: 'star', say: '方法一：把自己的 6 張獎賞卡全部拿完，就贏了！', dur: 4200,
+        run() { on(0); $$('#pw .mini', s1).forEach((m, i) => this.wait(() => { m.classList.add('taken'); PTCG.sfx('card_draw', { vol: .5 }); }, 300 + i * 250)); } },
+      { sfx: 'knockout', say: '方法二：對手戰鬥場的寶可夢昏厥，備戰區又沒有寶可夢可以換上場，你就贏了！', dur: 5200,
+        run() { on(1); const m = $('#ow .mini', s1); if (m) { m.style.transform = 'rotate(90deg) scale(.6)'; m.style.opacity = '.3'; } } },
+      { sfx: 'wrong', say: '方法三：對手的回合一開始要抽牌，牌庫卻已經沒有牌了，你就贏了！', dur: 5200,
+        run() { on(2); const d = $('#dw', s1); d.innerHTML = ''; d.insertAdjacentHTML('beforeend', '<span style="font-size:15px">空了！</span>'); } },
+      { sfx: 'star', say: '最常見的是第一種：一直擊倒對手的寶可夢，拿完獎賞卡！', dur: 4400, run() { $$('.w', s1).forEach(w => w.classList.add('on')); } }
+    ]
+  });
+
+  /* ===== 動畫 2：算獎賞卡 ===== */
+  const s2 = $('#s2');
+  let got = 0;
+  const take = (n, root) => { const ms = $$('#pz2 .mini:not(.taken)', root); for (let i = 0; i < n && i < ms.length; i++) ms[i].classList.add('taken'); got += n; $('.count', root).textContent = `已拿 ${Math.min(got, 6)} / 6 張`; };
+  const KOS = [['擊倒 寶可夢 ex', 2], ['擊倒 一般寶可夢', 1], ['擊倒 超級進化 ex', 3]];
+  new Player($('#L2'), {
+    reset() {
+      got = 0;
+      s2.innerHTML = `<div class="tally"><div class="prize-row" id="pz2">${mini({ back: 1 }).repeat(6)}</div><div class="count">已拿 0 / 6 張</div>
+        <div class="ko-row">${KOS.map(k => `<div class="ko">${k[0]}<br><b>＋${k[1]} 張</b></div>`).join('')}</div><div id="win2"></div></div>`;
+    },
+    steps: [
+      ...KOS.map((k, i) => ({ sfx: i === 2 ? 'attack_super' : 'attack_hit', say: `${k[0].replace('擊倒 ', '擊倒了')}！可以拿 ${k[1]} 張獎賞卡。`, dur: 4200,
+        run() { $$('.ko', s2)[i].classList.add('on'); take(k[1], s2); if (!PTCG.fast) sparkle($('.count', s2), 8); } })),
+      { sfx: 'level_clear', say: '2 + 1 + 3 = 6！只擊倒 3 隻，就拿完 6 張獎賞卡，獲勝！', dur: 5000, run() { $('#win2', s2).innerHTML = '<div class="winner">🏆 獲勝！</div>'; if (!PTCG.fast) PTCG.confetti(60); } },
+      { sfx: 'card_draw', say: '反過來說，如果你派出 ex 寶可夢，被擊倒時對手也會一次拿很多張，要小心保護喔！', dur: 5200, run() { PTCG.restart($$('.ko', s2)[2], 'shake'); } }
+    ]
+  });
+
+  /* ===== 小遊戲 ===== */
+  const P = (left) => `<div class="prize-row" style="margin-bottom:8px">${mini({ back: 1 }).repeat(left)}</div>`;
+  PTCG.choiceGame($('#game'), { rounds: [
+    { visual: P(6), q: '比賽剛開始，你擊倒了對手的「寶可夢 ex」，可以拿幾張獎賞卡？', opts: ['1 張', '2 張', '3 張'], a: 1, why: '寶可夢 ex 給 2 張。' },
+    { visual: P(3), q: '你還剩 3 張獎賞卡，擊倒了對手的「超級進化 ex」，結果會怎樣？', opts: ['還剩 1 張', '拿完 3 張，獲勝！', '還剩 2 張'], a: 1, why: '超級進化 ex 給 3 張，剛好拿完，獲勝！' },
+    { visual: P(2), q: '你還剩 2 張，擊倒了對手 1 隻一般寶可夢，還剩幾張？', opts: ['0 張', '1 張', '2 張'], a: 1, why: '一般寶可夢給 1 張：2 − 1 = 1。' },
+    { q: '對手的戰鬥寶可夢昏厥了，而對手的備戰區沒有寶可夢，會怎樣？', opts: ['對手可以從牌庫找一隻', '你獲勝！', '比賽平手'], a: 1, why: '對手場上沒有寶可夢可以上場，你就贏了。' },
+    { q: '輪到對手的回合，他的牌庫已經 0 張，沒辦法抽牌，會怎樣？', opts: ['對手跳過抽牌', '你獲勝！', '對手重新洗牌'], a: 1, why: '回合開始無法抽牌的人就輸了。' },
+    { visual: P(6), q: '要拿完 6 張，最少要擊倒幾隻「一般」寶可夢？', opts: ['3 隻', '6 隻', '2 隻'], a: 1, why: '一般寶可夢每隻給 1 張，所以要 6 隻。' }
+  ] });
+
+  PTCG.quiz($('#quiz'), 'u8', [
+    { q: '下面哪一個「不是」獲勝方式？', opts: ['拿完 6 張獎賞卡', '對手場上沒有寶可夢', '對手回合開始時沒牌可抽', '手牌超過 10 張'], a: 3, why: '手牌多少不影響輸贏。' },
+    { q: '擊倒一般的寶可夢，可以拿幾張獎賞卡？', opts: ['1 張', '2 張', '3 張'], a: 0, why: '一般寶可夢給 1 張。' },
+    { q: '擊倒寶可夢 ex，可以拿幾張獎賞卡？', opts: ['1 張', '2 張', '3 張'], a: 1, why: 'ex 給 2 張。' },
+    { q: '擊倒超級進化寶可夢 ex，可以拿幾張獎賞卡？', opts: ['2 張', '3 張', '6 張'], a: 1, why: '超級進化 ex 給 3 張。' },
+    { q: '獎賞卡一開始總共有幾張？', opts: ['3 張', '5 張', '6 張'], a: 2, why: '一開始有 6 張獎賞卡。' },
+    { q: '牌庫沒有牌可以抽的時候，是誰輸？', opts: ['回合開始時抽不到牌的人', '對手', '兩個人平手'], a: 0, why: '回合開始時沒辦法抽牌的人就輸了。' }
+  ], nextHref(9), 'cloud');
+
+})();
+</script>
+</body>
+</html>

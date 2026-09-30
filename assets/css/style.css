@@ -721,3 +721,51 @@ a{color:inherit}
   background:radial-gradient(circle at 35% 30%,#FFB0A8,#E8453C 60%,#B02A22);border:3px solid var(--ink);box-shadow:0 3px 0 var(--ink)}
 .cheat-btn.on{box-shadow:0 3px 0 var(--ink),0 0 12px 4px rgba(255,206,58,.9)}
 .cheat-btn.bump{animation:bump .35s var(--pop)}
+
+/* ===== 第 2 批：對戰卡、傷害、特殊狀態 ===== */
+.duel{display:flex;gap:28px;align-items:flex-start;justify-content:center;flex-wrap:wrap;width:100%}
+.fighter{display:flex;flex-direction:column;align-items:center;gap:6px;position:relative}
+.fighter .pcard{transition:transform .6s var(--pop),filter .6s,opacity .6s}
+.hpbar{width:200px;height:16px;border:3px solid var(--ink);border-radius:10px;background:#fff;overflow:hidden}
+.hpbar i{display:block;height:100%;background:linear-gradient(90deg,#5CC75A,#9BE07A);transition:width .8s}
+.hpbar.low i{background:linear-gradient(90deg,#FF5E6C,#FFB07A)}
+.hptext{font-size:18px;color:#fff;text-shadow:0 2px 0 var(--ink)}
+.hptext b{font-weight:400;font-size:22px}
+.counters{position:absolute;top:110px;left:50%;transform:translateX(-50%);display:flex;gap:4px;flex-wrap:wrap;width:160px;justify-content:center;z-index:6;pointer-events:none}
+.dc{width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#FF9AA2,#E8453C);border:3px solid var(--ink);color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 0 var(--ink);animation:popIn .4s var(--pop)}
+.dc.big{width:44px;height:44px;background:radial-gradient(circle at 35% 30%,#FFE08A,#E0A800);color:var(--ink)}
+.marks{position:absolute;top:8px;right:-12px;display:flex;flex-direction:column;gap:4px;z-index:7}
+.mk{width:38px;height:38px;border-radius:50%;border:3px solid var(--ink);display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;box-shadow:0 3px 0 var(--ink);animation:popIn .4s var(--pop)}
+.mk.poison{background:radial-gradient(circle at 35% 30%,#C9F5A0,#5AAE3A)}
+.mk.burn{background:radial-gradient(circle at 35% 30%,#FFD08A,#F07020)}
+.dmg-pop{position:absolute;top:60px;left:50%;transform:translateX(-50%);font-family:'Noto Sans TC';font-weight:900;font-size:46px;color:#fff;-webkit-text-stroke:3px var(--ink);paint-order:stroke fill;z-index:9;pointer-events:none;animation:dmgPop 1.3s ease-out forwards;white-space:nowrap}
+@keyframes dmgPop{0%{transform:translate(-50%,20px) scale(.4);opacity:0}30%{transform:translate(-50%,-10px) scale(1.2);opacity:1}100%{transform:translate(-50%,-60px);opacity:0}}
+.lunge{animation:lunge .6s var(--pop)} @keyframes lunge{40%{transform:translateX(70px) rotate(5deg) scale(1.06)}}
+.lunge-l{animation:lungeL .6s var(--pop)} @keyframes lungeL{40%{transform:translateX(-70px) rotate(-5deg) scale(1.06)}}
+.fighter.ko .pcard,.fighter.st-sleep .pcard,.fighter.st-para .pcard,.fighter.st-conf .pcard{animation:none !important}
+.fighter.ko .pcard{transform:rotate(-8deg) scale(.86);filter:grayscale(1);opacity:.55}
+.fighter.st-sleep .pcard{transform:rotate(-90deg) scale(.82)}
+.fighter.st-para .pcard{transform:rotate(90deg) scale(.82)}
+.fighter.st-conf .pcard{transform:rotate(180deg)}
+.st-tag{font-size:18px;background:#fff;border:3px solid var(--ink);border-radius:12px;padding:0 10px;box-shadow:0 3px 0 var(--ink)}
+.formula{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;font-size:22px;margin-top:10px;width:100%}
+.formula .fx{background:#fff;border:3px solid var(--ink);border-radius:14px;padding:4px 14px;box-shadow:0 4px 0 var(--ink);opacity:.25;transition:opacity .4s,transform .4s var(--pop)}
+.formula .fx.on{opacity:1;transform:scale(1.08)}
+.formula .fx.res{background:var(--sun)}
+.formula .op{color:#fff;text-shadow:0 2px 0 var(--ink);font-size:28px}
+.coin.tails{background:radial-gradient(circle at 35% 30%,#E6E6F0,#9AA0B8 60%,#6A7090)}
+.prize-row{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.prize-row .mini{transition:transform .6s var(--pop),opacity .6s}
+.prize-row .mini.taken{transform:translateY(-40px) rotate(-10deg) scale(.6);opacity:0}
+.badge-ex{display:inline-block;background:linear-gradient(180deg,#fff,#DDE6F2);border:2px solid var(--ink);border-radius:8px;padding:0 6px;font-family:'Noto Sans TC';font-weight:900;font-style:italic;color:#1F2A5C}
+.badge-mega{background:linear-gradient(180deg,#FFE8F6,#F4A8D8)}
+.checklist{display:flex;flex-direction:column;gap:6px;min-width:260px}
+.checklist .ck{background:#fff;border:3px solid var(--ink);border-radius:12px;padding:4px 12px;font-size:17px;opacity:.35;transition:opacity .4s,transform .4s var(--pop)}
+.checklist .ck.on{opacity:1;transform:translateX(8px);background:#FFF6C8}
+@media (max-width:560px){ .duel{gap:10px} .fighter .pcard{width:170px;min-height:250px} .hpbar{width:160px} .counters{top:90px} }
+
+.pcard .pc-art.long{font-size:38px}
+.ex-col .pc-name{font-size:14px;white-space:normal;line-height:1.15}
+.ex-col .pc-hp b{font-size:16px}
+.ex-col .pc-top{flex-wrap:wrap}
+.ex-col .pc-top{justify-content:space-between} .ex-col .pc-name{flex:1 1 100%;order:3;font-size:16px}

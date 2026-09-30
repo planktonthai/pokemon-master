@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第 6 關：進化｜寶可夢卡牌訓練營</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🃏</text></svg>">
+<link rel="stylesheet" href="../assets/css/style.css">
+<style>
+  .evo{display:flex;align-items:center;justify-content:center;gap:24px;flex-wrap:wrap;width:100%}
+  .evo .arrow{font-size:40px;color:#fff;text-shadow:0 3px 0 var(--ink)}
+  .stackcard{position:relative}
+  .stackcard .under{position:absolute;left:-14px;top:-14px;opacity:.55;transform:scale(.94)}
+  .evo-hand{display:flex;flex-direction:column;align-items:center;gap:6px;color:#fff;text-shadow:0 2px 0 var(--ink);font-size:18px}
+  .evo-hand .pcard{transition:transform .8s var(--pop),opacity .5s}
+  .rules-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;width:100%;max-width:760px}
+  .rules-grid .tile.no{background:#FFE9EC} .rules-grid .tile.yes{background:#E8F8E3} .rules-grid .tile.star{background:#FFF6C8}
+  .ex-row{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;align-items:flex-end;width:100%}
+  .ex-col{display:flex;flex-direction:column;align-items:center;gap:8px;opacity:.25;transition:opacity .5s,transform .5s var(--pop)}
+  .ex-col.on{opacity:1;transform:translateY(-6px)}
+  .ex-col .pcard{width:190px;min-height:260px}
+  .ex-col .prize-row .mini{width:44px;height:60px}
+  .ex-col .prize-row .mini::before{top:18px;height:16px}
+  .ex-col .cap{color:#fff;text-shadow:0 2px 0 var(--ink);font-size:18px}
+</style>
+</head>
+<body data-bgm="bgm_canyon" data-zone="canyon">
+<div class="wrap">
+  <div class="topbar">
+    <a class="btn" href="../index.html?zone=canyon">🗺 回地圖</a>
+    <span class="star-pill" aria-live="polite"></span>
+  </div>
+  <header class="unit-head">
+    <span class="tag" style="background:var(--canyon)">進階山谷・第 6 關</span>
+    <h1>進化</h1>
+    <p>寶可夢可以一階一階進化，變得更強壯！學會進化的方式和規則，還有 ex 寶可夢的秘密。</p>
+  </header>
+
+  <section class="lesson" id="L1" data-partner="fruit" data-intro="小火龍要進化了！">
+    <h2><span class="no">1</span>怎麼讓寶可夢進化</h2>
+    <p>把進化卡疊在原本的寶可夢上面，就完成進化了！</p>
+    <div class="stage " id="s1"></div>
+    <div class="caption" aria-live="polite"><span class="txt"></span></div>
+    <div class="controls"></div>
+  </section>
+  <section class="lesson" id="L2" data-partner="cloud" data-intro="進化有幾個重要的規則！">
+    <h2><span class="no">2</span>進化的規則</h2>
+    <p>什麼時候可以進化、什麼時候不行？</p>
+    <div class="stage " id="s2"></div>
+    <div class="caption" aria-live="polite"><span class="txt"></span></div>
+    <div class="controls"></div>
+  </section>
+  <section class="lesson" id="L3" data-partner="snail" data-intro="有些寶可夢特別強，但也有代價喔！">
+    <h2><span class="no">3</span>寶可夢 ex 和超級進化</h2>
+    <p>厲害的寶可夢被擊倒時，對手會拿比較多獎賞卡。</p>
+    <div class="stage " id="s3"></div>
+    <div class="caption" aria-live="polite"><span class="txt"></span></div>
+    <div class="controls"></div>
+  </section>
+  <section class="lesson">
+    <h2><span class="no">🎮</span>進化線排排站</h2>
+    <p>把每張寶可夢放到正確的進化階段！</p>
+    <div class="game" id="game"></div>
+  </section>
+  <section class="lesson">
+    <h2><span class="no">★</span>過關小測驗</h2>
+    <div class="quiz" id="quiz"></div>
+  </section>
+</div>
+
+<script src="../assets/js/audio.js"></script>
+<script src="../assets/js/common.js"></script>
+<script>
+(() => {
+  const { card, mini, sparkle, restart, Player } = PTCG;
+  PTCG.clouds();
+  PTCG.twinkles(document.querySelector('.unit-head'), 4);
+  PTCG.starPill(document.querySelector('.star-pill'));
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+  const hz = (stage, z) => { $$('.zone-box', stage).forEach(b => b.classList.toggle('hl', b.dataset.z === z)); };
+  const put = (el, html) => { el.insertAdjacentHTML('beforeend', html); const n = el.lastElementChild; if (!PTCG.fast) restart(n, 'pop-in'); return n; };
+  function matHTML(cls = '') {
+    return `<div class="mat ${cls}">
+      <div class="zone-box prize" data-z="prize"><span class="lbl">獎賞卡</span></div>
+      <div class="zone-box active" data-z="active"><span class="lbl">戰鬥場</span></div>
+      <div class="zone-box deck" data-z="deck"><span class="lbl">牌庫</span></div>
+      <div class="zone-box bench" data-z="bench"><span class="lbl">備戰區（最多 5 隻）</span></div>
+      <div class="zone-box discard" data-z="discard"><span class="lbl">棄牌區</span></div>
+    </div>`;
+  }
+  const nextHref = n => PTCG.AVAILABLE.includes('u' + n) ? 'unit' + String(n).padStart(2, '0') + '.html' : null;
+
+  const F = PTCG;
+  const CHAR = { kind: 'pokemon', stage: '基礎', name: '小火龍', hp: 70, type: '火', attacks: [{ cost: ['火'], name: '火花', dmg: 30 }], weak: '水', retreat: 1 };
+  const CHML = { kind: 'pokemon', stage: '1階進化', name: '火恐龍', hp: 100, type: '火', attacks: [{ cost: ['火', '無色'], name: '火焰爪', dmg: 60 }], weak: '水', retreat: 2 };
+  const CHZD = { kind: 'pokemon', stage: '2階進化', name: '噴火龍', hp: 180, type: '火', attacks: [{ cost: ['火', '火', '無色'], name: '爆炎', dmg: 150 }], weak: '水', retreat: 3 };
+  const EX = { kind: 'pokemon', stage: '基礎', name: '雷電獸 ex', hp: 200, type: '雷', attacks: [{ cost: ['雷', '雷'], name: '雷霆', dmg: 120 }], weak: '鬥', retreat: 1 };
+  const MEGA = { kind: 'pokemon', stage: '超級進化', name: '超級噴火龍 ex', hp: 360, type: '火', attacks: [{ cost: ['火', '火', '火'], name: '超級爆炎', dmg: 280 }], weak: '水', retreat: 3 };
+
+  /* ===== 動畫 1：進化方式 ===== */
+  const s1 = $('#s1');
+  new Player($('#L1'), {
+    reset() {
+      s1.innerHTML = `<div class="evo"><div id="field">${F.fighter(CHAR, 'f1')}</div><div class="arrow">⬅</div><div class="evo-hand" id="hand">手牌${card(CHML)}</div></div>`;
+      const f = $('#f1', s1); f.dataset.dmg = 20; F.paintHP(f);
+      f.querySelector('.pcard').insertAdjacentHTML('beforeend', '<div class="tray" style="position:absolute;bottom:-4px;left:6px;display:flex;gap:3px">' + PTCG.energy('火') + '</div>');
+    },
+    steps: [
+      { sfx: 'card_draw', say: '小火龍在場上，身上有 1 個火能量，還受了 20 點傷害。', dur: 4000, run() { PTCG.restart($('#f1', s1), 'jump'); } },
+      { sfx: 'card_draw', say: '手牌裡有「火恐龍」，卡片上寫著「1階進化」，是從小火龍進化來的。', dur: 4600, run() { const h = $('#hand .pcard', s1); h.querySelector('[data-part=stage]').classList.add('hl'); PTCG.restart(h, 'jump'); } },
+      { sfx: 'card_place', say: '把火恐龍直接疊在小火龍上面——進化完成！', dur: 4000,
+        run() { const f = $('#f1', s1), old = f.querySelector('.pcard'), h = $('#hand .pcard', s1);
+          old.insertAdjacentHTML('afterend', h.outerHTML); h.remove(); old.classList.add('under'); f.classList.add('stackcard');
+          f.querySelector('.pcard:not(.under)').querySelectorAll('.hl').forEach(e => e.classList.remove('hl'));
+          F.setMax(f, 100); $('.arrow', s1).style.opacity = 0; if (!PTCG.fast) sparkle(f, 14); } },
+      { sfx: 'star', say: '進化後 HP 變成 100！原本的能量和 20 點傷害都會留著，所以還剩 80。', dur: 5000, run() { PTCG.restart($('#f1 .hptext', s1), 'jump'); } },
+      { sfx: 'card_place', say: '下一個回合，還可以再進化成「2階進化」的噴火龍，變得更強！', dur: 4600,
+        run() { const h = $('#hand', s1); h.innerHTML = '下個回合' + card(CHZD); $('.arrow', s1).style.opacity = 1; PTCG.restart(h.querySelector('.pcard'), 'pop-in'); } }
+    ]
+  });
+
+  /* ===== 動畫 2：進化規則 ===== */
+  const s2 = $('#s2');
+  const RULES = [
+    ['no', '❌ 自己的第一回合', '不管先攻後攻，第一回合都不能進化。'],
+    ['no', '❌ 剛放上場的寶可夢', '這回合才放到場上的，要等下一回合。'],
+    ['no', '❌ 同一隻連續進化', '同一回合，同一隻只能進化 1 次（不能基礎直接變 2 階）。'],
+    ['yes', '⭕ 可以進化很多隻', '只要符合規則，這回合可以讓好幾隻都進化。'],
+    ['yes', '⭕ 進化會治好特殊狀態', '中毒、睡眠等特殊狀態，進化後全部解除。'],
+    ['star', '⭐ 神奇糖果（物品卡）', '讓基礎寶可夢直接跳到 2 階進化！但一樣不能在第一回合、或剛放上場時用。']
+  ];
+  new Player($('#L2'), {
+    reset() { s2.innerHTML = '<div class="rules-grid">' + RULES.map(r => `<div class="tile ${r[0]} hidden-card"><b style="font-weight:400;font-size:18px">${r[1]}</b><br><small>${r[2]}</small></div>`).join('') + '</div>'; },
+    steps: RULES.map((r, i) => ({ sfx: r[0] === 'no' ? 'wrong' : r[0] === 'yes' ? 'correct' : 'star', say: r[1].slice(2) + '：' + r[2], dur: 4400,
+      run() { const t = $$('.tile', s2)[i]; t.classList.remove('hidden-card'); PTCG.restart(t, 'pop-in'); } }))
+  });
+
+  /* ===== 動畫 3：ex 與超級進化 ex ===== */
+  const s3 = $('#s3');
+  const col = (d, n, cap) => `<div class="ex-col">${card(d)}<div class="prize-row">${mini({ back: 1 }).repeat(n)}</div><div class="cap">${cap}</div></div>`;
+  new Player($('#L3'), {
+    reset() { s3.innerHTML = '<div class="ex-row">' + col(CHAR, 1, '一般寶可夢：對手拿 1 張') + col(EX, 2, '寶可夢 ex：對手拿 2 張') + col(MEGA, 3, '超級進化 ex：對手拿 3 張') + '</div>'; },
+    steps: [
+      { sfx: 'card_flip', say: '一般的寶可夢被擊倒，對手拿 1 張獎賞卡。', dur: 4000, run() { $$('.ex-col', s3)[0].classList.add('on'); } },
+      { sfx: 'card_flip', say: '名字後面有「ex」的寶可夢，HP 高、招式強，但被擊倒時對手拿 2 張！', dur: 4800, run() { $$('.ex-col', s3)[1].classList.add('on'); } },
+      { sfx: 'attack_super', say: '「超級進化寶可夢 ex」最強大，但被擊倒時，對手一口氣拿 3 張！', dur: 4800, run() { $$('.ex-col', s3)[2].classList.add('on'); } },
+      { sfx: 'star', say: '所以強的寶可夢要好好保護，這就是高手的策略！', dur: 4200, run() { $$('.ex-col', s3).forEach((c, i) => this.wait(() => PTCG.restart(c, 'jump'), i * 150)); } }
+    ]
+  });
+
+  /* ===== 小遊戲 ===== */
+  const M = (name, type, hp) => mini({ name, type, hp });
+  PTCG.placeGame($('#game'), {
+    items: [
+      { html: M('小火龍', '火', 70), zone: 'b', ok: '對！小火龍是基礎寶可夢。' },
+      { html: M('火恐龍', '火', 100), zone: 's1', ok: '對！火恐龍是 1 階進化。', hint: '火恐龍是從小火龍進化來的喔！' },
+      { html: M('噴火龍', '火', 180), zone: 's2', ok: '對！噴火龍是 2 階進化，最強！', hint: '噴火龍是從火恐龍再進化的！' },
+      { html: M('傑尼龜', '水', 60), zone: 'b', ok: '對！傑尼龜是基礎寶可夢。' },
+      { html: M('卡咪龜', '水', 100), zone: 's1', ok: '對！卡咪龜是 1 階進化。', hint: '卡咪龜是從傑尼龜進化來的。' },
+      { html: M('水箭龜', '水', 180), zone: 's2', ok: '對！水箭龜是 2 階進化。', hint: '水箭龜是傑尼龜家族的最後一階！' }
+    ],
+    zones: [{ id: 'b', label: '🥚 基礎' }, { id: 's1', label: '⬆️ 1階進化' }, { id: 's2', label: '⏫ 2階進化' }]
+  });
+
+  PTCG.quiz($('#quiz'), 'u6', [
+    { q: '要讓寶可夢進化，進化卡要放在哪裡？', opts: ['放進備戰區', '疊在原本的寶可夢上面', '放進棄牌區', '放在獎賞卡旁邊'], a: 1, why: '進化卡直接疊在原本的寶可夢上。' },
+    { q: '進化後，原本身上的能量和傷害會怎樣？', opts: ['全部消失', '全部留著', '能量消失、傷害留著'], a: 1, why: '能量和傷害都會留著。' },
+    { q: '下面哪個時候「可以」進化？', opts: ['自己的第一回合', '剛放上場的那一回合', '已經在場上一回合以上的寶可夢'], a: 2, why: '要在場上待過至少一回合，而且不是自己的第一回合。' },
+    { q: '寶可夢 ex 被擊倒時，對手拿幾張獎賞卡？', opts: ['1 張', '2 張', '3 張'], a: 1, why: '寶可夢 ex 給 2 張。' },
+    { q: '超級進化寶可夢 ex 被擊倒時，對手拿幾張獎賞卡？', opts: ['1 張', '2 張', '3 張', '6 張'], a: 2, why: '超級進化 ex 給 3 張。' },
+    { q: '中毒的寶可夢進化後，會怎樣？', opts: ['還是中毒', '中毒解除', '變成灼傷'], a: 1, why: '進化會解除所有特殊狀態。' }
+  ], nextHref(7), 'fruit');
+
+})();
+</script>
+</body>
+</html>

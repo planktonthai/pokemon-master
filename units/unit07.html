@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第 7 關：特殊狀態｜寶可夢卡牌訓練營</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🃏</text></svg>">
+<link rel="stylesheet" href="../assets/css/style.css">
+<style>
+  .st-row{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%}
+  .st-info{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;min-height:44px}
+  .ck-wrap{display:flex;gap:24px;align-items:center;justify-content:center;flex-wrap:wrap;width:100%}
+</style>
+</head>
+<body data-bgm="bgm_canyon" data-zone="canyon">
+<div class="wrap">
+  <div class="topbar">
+    <a class="btn" href="../index.html?zone=canyon">🗺 回地圖</a>
+    <span class="star-pill" aria-live="polite"></span>
+  </div>
+  <header class="unit-head">
+    <span class="tag" style="background:var(--canyon)">進階山谷・第 7 關</span>
+    <h1>特殊狀態</h1>
+    <p>睡眠、麻痺、混亂、中毒、灼傷——五種特殊狀態會讓比賽充滿變化，學會它們就不怕被偷襲！</p>
+  </header>
+
+  <section class="lesson" id="L1" data-partner="snail" data-intro="有些招式會讓對手陷入「特殊狀態」！">
+    <h2><span class="no">1</span>五種特殊狀態</h2>
+    <p>看卡片怎麼擺，就知道寶可夢發生什麼事。</p>
+    <div class="stage " id="s1"></div>
+    <div class="caption" aria-live="polite"><span class="txt"></span></div>
+    <div class="controls"></div>
+  </section>
+  <section class="lesson" id="L2" data-partner="fruit" data-intro="回合結束了，來做寶可夢檢查！">
+    <h2><span class="no">2</span>寶可夢檢查</h2>
+    <p>每個回合結束後，要依照順序檢查特殊狀態。</p>
+    <div class="stage " id="s2"></div>
+    <div class="caption" aria-live="polite"><span class="txt"></span></div>
+    <div class="controls"></div>
+  </section>
+  <section class="lesson" id="L3" data-partner="cloud" data-intro="中了特殊狀態，要怎麼恢復呢？">
+    <h2><span class="no">3</span>怎麼解除特殊狀態</h2>
+    <p>退到備戰區或進化，特殊狀態就會全部解除。</p>
+    <div class="stage " id="s3"></div>
+    <div class="caption" aria-live="polite"><span class="txt"></span></div>
+    <div class="controls"></div>
+  </section>
+  <section class="lesson">
+    <h2><span class="no">🎮</span>狀態小醫生</h2>
+    <p>判斷每種情況「可以」還是「不行」。</p>
+    <div class="game" id="game"></div>
+  </section>
+  <section class="lesson">
+    <h2><span class="no">★</span>過關小測驗</h2>
+    <div class="quiz" id="quiz"></div>
+  </section>
+</div>
+
+<script src="../assets/js/audio.js"></script>
+<script src="../assets/js/common.js"></script>
+<script>
+(() => {
+  const { card, mini, sparkle, restart, Player } = PTCG;
+  PTCG.clouds();
+  PTCG.twinkles(document.querySelector('.unit-head'), 4);
+  PTCG.starPill(document.querySelector('.star-pill'));
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+  const hz = (stage, z) => { $$('.zone-box', stage).forEach(b => b.classList.toggle('hl', b.dataset.z === z)); };
+  const put = (el, html) => { el.insertAdjacentHTML('beforeend', html); const n = el.lastElementChild; if (!PTCG.fast) restart(n, 'pop-in'); return n; };
+  function matHTML(cls = '') {
+    return `<div class="mat ${cls}">
+      <div class="zone-box prize" data-z="prize"><span class="lbl">獎賞卡</span></div>
+      <div class="zone-box active" data-z="active"><span class="lbl">戰鬥場</span></div>
+      <div class="zone-box deck" data-z="deck"><span class="lbl">牌庫</span></div>
+      <div class="zone-box bench" data-z="bench"><span class="lbl">備戰區（最多 5 隻）</span></div>
+      <div class="zone-box discard" data-z="discard"><span class="lbl">棄牌區</span></div>
+    </div>`;
+  }
+  const nextHref = n => PTCG.AVAILABLE.includes('u' + n) ? 'unit' + String(n).padStart(2, '0') + '.html' : null;
+
+  const F = PTCG;
+  const BULB = { kind: 'pokemon', stage: '基礎', name: '妙蛙種子', hp: 70, type: '草', attacks: [{ cost: ['草'], name: '藤鞭', dmg: 40 }], weak: '火', retreat: 2 };
+  const EEVEE = { kind: 'pokemon', stage: '基礎', name: '伊布', hp: 60, type: '無色', attacks: [{ cost: ['無色'], name: '撞擊', dmg: 20 }], weak: '鬥', retreat: 1 };
+  const IVY = { kind: 'pokemon', stage: '1階進化', name: '妙蛙草', hp: 100, type: '草', attacks: [{ cost: ['草', '無色'], name: '飛葉快刀', dmg: 60 }], weak: '火', retreat: 2 };
+  const tag = (root, html) => { const t = $('.st-info', root); t.innerHTML = html; if (!PTCG.fast) PTCG.restart(t, 'pop-in'); };
+
+  /* ===== 動畫 1：五種狀態 ===== */
+  const s1 = $('#s1');
+  const STS = [
+    ['sleep', null, '😴 睡眠：卡片轉向左邊（逆時針）', '睡著的寶可夢不能攻擊，也不能撤退。'],
+    ['para', null, '⚡ 麻痺：卡片轉向右邊（順時針）', '麻痺的寶可夢不能攻擊，也不能撤退。'],
+    ['conf', null, '😵 混亂：卡片上下顛倒', '攻擊前要擲硬幣：反面的話攻擊失敗，自己還受到 30 點傷害！'],
+    [null, 'poison', '🟢 中毒：放上中毒標記', '每次寶可夢檢查時，受到 10 點傷害。'],
+    [null, 'burn', '🟠 灼傷：放上灼傷標記', '每次寶可夢檢查時，受到 20 點傷害，然後擲硬幣，正面就痊癒。']
+  ];
+  new Player($('#L1'), {
+    reset() { s1.innerHTML = `<div class="st-row">${F.fighter(BULB, 'p1')}<div class="st-info"></div></div>`; },
+    steps: STS.map(([st, mk, name, desc], i) => ({
+      sfx: ['attack_hit', 'attack_zap', 'wrong', 'damage', 'attack_fire'][i], say: name.slice(3) + '。' + desc, dur: 5200,
+      run() { const f = $('#p1', s1); F.status(f, st); F.mark(f, 'poison', mk === 'poison'); F.mark(f, 'burn', mk === 'burn'); tag(s1, `<span class="st-tag">${name}</span>`); }
+    })).concat([{ sfx: 'star', say: '小秘訣：睡眠、麻痺、混亂同時只會有 1 種（新的取代舊的）；中毒和灼傷可以跟它們同時發生！', dur: 6000,
+      run() { const f = $('#p1', s1); F.status(f, 'sleep'); F.mark(f, 'poison'); F.mark(f, 'burn'); tag(s1, '<span class="st-tag">😴 睡眠 ＋ 🟢 中毒 ＋ 🟠 灼傷</span>'); } }])
+  });
+
+  /* ===== 動畫 2：寶可夢檢查 ===== */
+  const s2 = $('#s2');
+  const CK = ['① 中毒：受到 10 點傷害', '② 灼傷：受到 20 點傷害，再擲硬幣', '③ 睡眠：擲硬幣，正面就醒來', '④ 麻痺：自己的下一回合結束後解除', '⑤ 最後檢查有沒有寶可夢昏厥'];
+  const ck = i => $$('.ck', s2).forEach((c, k) => c.classList.toggle('on', k === i));
+  new Player($('#L2'), {
+    reset() {
+      s2.innerHTML = `<div class="ck-wrap"><div class="st-row">${F.fighter(EEVEE, 'p2')}<div class="coin" id="c2" style="width:80px;height:80px;font-size:32px">?</div></div>
+        <div class="checklist">${CK.map(c => `<div class="ck">${c}</div>`).join('')}</div></div>`;
+      const f = $('#p2', s2); F.status(f, 'sleep'); F.mark(f, 'poison'); F.mark(f, 'burn');
+    },
+    steps: [
+      { sfx: 'card_draw', say: '伊布同時「中毒」、「灼傷」又「睡著」了。回合結束，照順序檢查！', dur: 4600, run() { ck(-1); } },
+      { say: '第一步，中毒：受到 10 點傷害。', dur: 3600, run() { ck(0); F.damage($('#p2', s2), 10); } },
+      { say: '第二步，灼傷：先受到 20 點傷害……', dur: 3600, run() { ck(1); F.damage($('#p2', s2), 20); } },
+      { say: '再擲硬幣——反面！灼傷還沒好。', dur: 3800, run() { F.coin($('#c2', s2), false); } },
+      { say: '第三步，睡眠：擲硬幣——正面！伊布醒來了！', dur: 4200, run() { ck(2); F.coin($('#c2', s2), true); this.wait(() => { F.status($('#p2', s2), null); PTCG.sfx('correct'); }, 1400); } },
+      { sfx: 'card_draw', say: '第四步，麻痺：伊布沒有麻痺，跳過。', dur: 3400, run() { ck(3); } },
+      { sfx: 'star', say: '最後檢查昏厥：伊布 HP 60，受了 30 點傷害，還剩 30，還能繼續比賽！', dur: 5000, run() { ck(4); PTCG.restart($('#p2 .hptext', s2), 'jump'); } }
+    ]
+  });
+
+  /* ===== 動畫 3：解除 ===== */
+  const s3 = $('#s3');
+  new Player($('#L3'), {
+    reset() {
+      s3.innerHTML = `<div class="st-row"><div class="duel" id="d3">${F.fighter(BULB, 'p3')}</div><div class="st-info"></div></div>`;
+      const f = $('#p3', s3); F.status(f, 'conf'); F.mark(f, 'poison');
+    },
+    steps: [
+      { sfx: 'wrong', say: '妙蛙種子「混亂」又「中毒」了，好慘！', dur: 3800, run() { tag(s3, '<span class="st-tag">😵 混亂 ＋ 🟢 中毒</span>'); } },
+      { sfx: 'card_flip', say: '方法一：撤退到備戰區。到了備戰區，特殊狀態全部解除！（睡眠和麻痺不能撤退喔）', dur: 5400,
+        run() { const f = $('#p3', s3); F.status(f, null); F.mark(f, 'poison', false); tag(s3, '<span class="st-tag">🪑 撤退到備戰區 → 全部解除！</span>'); if (!PTCG.fast) sparkle(f, 10); } },
+      { sfx: 'wrong', say: '如果又中了麻痺呢？麻痺不能撤退……', dur: 4000, run() { const f = $('#p3', s3); F.status(f, 'para'); F.mark(f, 'poison'); tag(s3, '<span class="st-tag">⚡ 麻痺 ＋ 🟢 中毒（不能撤退）</span>'); } },
+      { sfx: 'card_place', say: '方法二：進化！把妙蛙草疊上去，特殊狀態也全部解除！', dur: 5000,
+        run() { $('#d3', s3).innerHTML = F.fighter(IVY, 'p3'); tag(s3, '<span class="st-tag">⬆️ 進化 → 全部解除！</span>'); if (!PTCG.fast) sparkle($('#p3', s3), 14); } },
+      { sfx: 'star', say: '有些訓練家卡也能治好特殊狀態。記住：備戰區的寶可夢不會有特殊狀態！', dur: 5000, run() { PTCG.restart($('#p3', s3), 'jump'); } }
+    ]
+  });
+
+  /* ===== 小遊戲 ===== */
+  PTCG.yesNoGame($('#game'), { cards: [
+    { q: '睡著的寶可夢，想要攻擊。', a: false, why: '睡眠時不能攻擊。' },
+    { q: '麻痺的寶可夢，想要撤退。', a: false, why: '麻痺時不能撤退。' },
+    { q: '混亂的寶可夢，想要撤退。', a: true, why: '混亂可以撤退喔！撤退後混亂就解除了。' },
+    { q: '混亂的寶可夢，想要攻擊。', a: true, why: '可以攻擊，但要先擲硬幣，反面就失敗，還會受到 30 點傷害。' },
+    { q: '中毒的寶可夢，想要攻擊。', a: true, why: '中毒不影響攻擊，只是每次檢查會受到傷害。' },
+    { q: '一隻寶可夢同時中毒又灼傷。', a: true, why: '中毒和灼傷可以同時發生。' },
+    { q: '一隻寶可夢同時睡著又麻痺。', a: false, why: '睡眠、麻痺、混亂同時只會有 1 種，新的會取代舊的。' },
+    { q: '備戰區的寶可夢陷入中毒。', a: false, why: '特殊狀態只會發生在戰鬥場的寶可夢身上。' }
+  ] });
+
+  PTCG.quiz($('#quiz'), 'u7', [
+    { q: '「睡眠」的寶可夢，卡片要怎麼擺？', opts: ['轉向左邊', '轉向右邊', '上下顛倒', '放上標記'], a: 0, why: '睡眠是逆時針轉向左邊。' },
+    { q: '「中毒」每次寶可夢檢查會受到多少傷害？', opts: ['10 點', '20 點', '30 點'], a: 0, why: '中毒每次 10 點。' },
+    { q: '「灼傷」每次寶可夢檢查會怎樣？', opts: ['受到 20 點傷害，再擲硬幣', '直接昏厥', '擲硬幣，反面才受傷'], a: 0, why: '先受 20 點傷害，再擲硬幣，正面就痊癒。' },
+    { q: '「混亂」的寶可夢攻擊時，擲到反面會怎樣？', opts: ['攻擊成功', '攻擊失敗，自己受到 30 點傷害', '直接昏厥'], a: 1, why: '攻擊失敗，還在自己身上放 3 個傷害指示物。' },
+    { q: '下面哪一個方法可以解除特殊狀態？', opts: ['多附一張能量', '進化', '用招式攻擊'], a: 1, why: '進化或退到備戰區都會解除。' },
+    { q: '哪兩種特殊狀態會讓寶可夢「不能撤退」？', opts: ['中毒和灼傷', '睡眠和麻痺', '混亂和中毒'], a: 1, why: '睡眠和麻痺都不能攻擊也不能撤退。' }
+  ], nextHref(8), 'snail');
+
+})();
+</script>
+</body>
+</html>

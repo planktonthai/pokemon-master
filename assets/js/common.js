@@ -3,7 +3,7 @@ const PTCG = (() => {
   const KEY = 'ptcg-camp-progress-v1';
 
   /* 已完成製作的單元（新增單元時加進來） */
-  const AVAILABLE = ['u1', 'u2', 'u3', 'u4'];
+  const AVAILABLE = ['u1', 'u2', 'u3', 'u4', 'u5', 'u6', 'u7', 'u8'];
 
   const UNITS = [
     { id: 'u1', no: 1, name: '認識卡牌', zone: 'grass' },
@@ -95,7 +95,7 @@ const PTCG = (() => {
         <span class="pc-name" data-part="name">${d.name}</span>
         <span class="pc-hp" data-part="hp">HP<b>${d.hp}</b>${energy(d.type)}</span>
       </div>
-      <div class="pc-art" data-part="type">${d.type}</div>
+      <div class="pc-art ${d.type.length > 1 ? 'long' : ''}" data-part="type">${d.type}</div>
       <div data-part="attacks">${atks}</div>
       <div class="pc-foot">
         <div data-part="weak">弱點<span class="v">${d.weak ? energy(d.weak) + '×2' : '—'}</span></div>
@@ -253,6 +253,74 @@ const PTCG = (() => {
         if (ok) { right++; sfx('correct'); sparkle(b, 6); } else { sfx('wrong'); restart(b, 'shake'); }
         root.querySelector('.pg-msg').innerHTML = (ok ? '🎉 ' : '🤔 正確答案是「' + (c.a ? '可以' : '不行') + '」。') + c.why;
         const nx = document.createElement('button'); nx.className = 'btn'; nx.textContent = '下一張 ▶'; nx.style.marginTop = '10px';
+        nx.onclick = () => { k++; draw(); }; root.appendChild(nx); nx.focus();
+      });
+    };
+    draw();
+  }
+
+
+  /* ---------- 對戰卡：HP 條、傷害指示物、特殊狀態 ---------- */
+  function fighter(d, id) {
+    return `<div class="fighter" id="${id}" data-max="${d.hp}" data-dmg="0">${card(d)}
+      <div class="hpbar"><i style="width:100%"></i></div><div class="hptext">HP <b>${d.hp}</b> / ${d.hp}</div>
+      <div class="counters"></div><div class="marks"></div></div>`;
+  }
+  function paintHP(el) {
+    const max = +el.dataset.max, dmg = +el.dataset.dmg, left = Math.max(0, max - dmg);
+    el.querySelector('.hpbar i').style.width = (left / max * 100) + '%';
+    el.querySelector('.hpbar').classList.toggle('low', left / max <= .35);
+    el.querySelector('.hptext').innerHTML = `HP <b>${left}</b> / ${max}`;
+    const c = el.querySelector('.counters'); let n = dmg, h = '';
+    while (n >= 50) { h += '<span class="dc big">50</span>'; n -= 50; }
+    while (n >= 10) { h += '<span class="dc">10</span>'; n -= 10; }
+    c.innerHTML = h;
+    el.classList.toggle('ko', left === 0);
+    return left;
+  }
+  function damage(el, amt, label) {
+    el.dataset.dmg = (+el.dataset.dmg) + amt;
+    const left = paintHP(el);
+    if (!FAST) {
+      restart(el.querySelector('.pcard'), 'shake');
+      const pop = document.createElement('div'); pop.className = 'dmg-pop'; pop.textContent = label || ('-' + amt);
+      el.appendChild(pop); setTimeout(() => pop.remove(), 1300);
+      sfx(left === 0 ? 'knockout' : 'damage');
+    }
+    return left;
+  }
+  function setMax(el, max) { el.dataset.max = max; paintHP(el); }
+  function lunge(el, dir = 1) { if (!FAST) restart(el, dir > 0 ? 'lunge' : 'lunge-l'); }
+  function status(el, st) {
+    ['st-sleep', 'st-para', 'st-conf'].forEach(c => el.classList.remove(c));
+    if (st) el.classList.add('st-' + st);
+  }
+  function mark(el, kind, on = true) {
+    const m = el.querySelector('.marks'), ex = m.querySelector('.' + kind);
+    if (on && !ex) m.insertAdjacentHTML('beforeend', `<span class="mk ${kind}">${kind === 'poison' ? '毒' : '燒'}</span>`);
+    if (!on && ex) ex.remove();
+  }
+  function coin(el, heads) {
+    el.textContent = '?';
+    if (!FAST) { restart(el, 'spin'); sfx('card_flip'); }
+    const done = () => { el.textContent = heads ? '正' : '反'; el.classList.toggle('tails', !heads); };
+    FAST ? done() : setTimeout(done, 1300);
+  }
+
+  /* 4. 選擇題小遊戲（不計星星） */
+  function choiceGame(root, { rounds, done }) {
+    let k = 0, right = 0;
+    const draw = () => {
+      if (k >= rounds.length) { root.innerHTML = `<div class="q">答對 ${right} / ${rounds.length} 題</div><p>${right === rounds.length ? '全對！太厲害了！' : '再玩一次，挑戰全對！'}</p><button class="btn sun" id="cg-again">🔁 再玩一次</button>`; root.querySelector('#cg-again').onclick = () => { k = 0; right = 0; draw(); }; if (right === rounds.length) { sfx('level_clear'); confetti(60); } done && done(); return; }
+      const r = rounds[k];
+      root.innerHTML = `<div class="pg-msg">第 ${k + 1} / ${rounds.length} 題</div>${r.visual || ''}<div class="yn-card pop-in">${r.q}</div><div class="yn-btns">${r.opts.map((o, i) => `<button class="btn" data-i="${i}">${o}</button>`).join('')}</div><div class="pg-msg" aria-live="polite"></div>`;
+      root.querySelectorAll('.yn-btns .btn').forEach(b => b.onclick = () => {
+        const ok = +b.dataset.i === r.a;
+        root.querySelectorAll('.yn-btns .btn').forEach(x => x.disabled = true);
+        root.querySelector(`.yn-btns [data-i="${r.a}"]`).classList.add('grass');
+        if (ok) { right++; sfx('correct'); sparkle(b, 6); } else { b.classList.add('berry'); sfx('wrong'); restart(b, 'shake'); }
+        root.querySelectorAll('.pg-msg')[1].innerHTML = (ok ? '🎉 ' : '🤔 ') + r.why;
+        const nx = document.createElement('button'); nx.className = 'btn'; nx.textContent = '下一題 ▶'; nx.style.marginTop = '10px';
         nx.onclick = () => { k++; draw(); }; root.appendChild(nx); nx.focus();
       });
     };
@@ -498,5 +566,5 @@ const PTCG = (() => {
     document.addEventListener('click', e => { const b = e.target.closest('.btn,.node,.gym-tag'); if (b && !b.classList.contains('sound-btn') && !b.closest('.pg-zone,.opt,.og-step,.yn-btns,.dots')) PTCGAudio.play('ui_click', { vol: .6 }); }, true);
   }
 
-  return { cheatButton, PARTNERS, avatar, mini, placeGame, orderGame, yesNoGame, sfx: (n, o) => sfx(n, o), get fast() { return FAST; }, twinkles, UNITS, AVAILABLE, getStars, setStars, totalStars, isUnlocked, energy, card, sparkle, confetti, restart, clouds: clouds2, starPill, Player, quiz };
+  return { fighter, damage, setMax, paintHP, lunge, status, mark, coin, choiceGame, cheatButton, PARTNERS, avatar, mini, placeGame, orderGame, yesNoGame, sfx: (n, o) => sfx(n, o), get fast() { return FAST; }, twinkles, UNITS, AVAILABLE, getStars, setStars, totalStars, isUnlocked, energy, card, sparkle, confetti, restart, clouds: clouds2, starPill, Player, quiz };
 })();
