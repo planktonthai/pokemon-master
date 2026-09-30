@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>寶可夢卡牌訓練營</title>
+<meta name="description" content="給小學生的寶可夢卡牌遊戲教學，從新手到高手一步步學。">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🃏</text></svg>">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <span></span>
+    <span class="star-pill" aria-live="polite"></span>
+  </div>
+
+  <header class="hero">
+    <div class="hero3d" id="hero3d"></div>
+    <h1 id="title" aria-label="寶可夢卡牌訓練營"></h1>
+    <p>一關一關往前走，從新手變成卡牌高手！</p>
+  </header>
+
+  <main class="map" id="map">
+    <svg class="map-path" id="path" aria-hidden="true"><defs><mask id="holes" maskUnits="userSpaceOnUse"><rect id="maskRect" x="0" y="0" width="100%" height="100%" fill="#fff"/><g id="maskDots"></g></mask></defs><path d="" mask="url(#holes)"/></svg>
+
+    <section class="zone grass">
+      <span class="deco" aria-hidden="true">🌿🌼</span>
+      <h2>🌱 新手草原</h2>
+      <div class="nodes" data-zone="grass"></div>
+    </section>
+
+    <section class="zone canyon">
+      <span class="deco" aria-hidden="true">⛰️🌵</span>
+      <h2>🏜️ 進階山谷</h2>
+      <div class="nodes" data-zone="canyon"></div>
+    </section>
+
+    <section class="zone volcano">
+      <span class="deco" aria-hidden="true">🌋🔥</span>
+      <h2>🌋 高手火山</h2>
+      <div class="nodes" data-zone="volcano"></div>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="assets/vendor/three.min.js"></script>
+<script src="assets/js/fx3d.js"></script>
+<script src="assets/js/audio.js"></script>
+<script src="assets/js/common.js"></script>
+<script>
+(() => {
+  PTCG.clouds();
+  PTCG.starPill(document.querySelector('.star-pill'));
+
+  /* 標題逐字落下 */
+  PTCG.twinkles(document.querySelector('.hero'), 8);
+
+  /* 3D 主視覺：兩張閃卡（點卡片會翻面） */
+  if (PTCG3D.ok) {
+    const go = () => PTCG3D.hero(document.getElementById('hero3d'), [
+      { stage: '基礎', name: '皮卡丘', hp: 60, type: '雷', attacks: [{ cost: ['雷'], name: '電擊', dmg: 20 }, { cost: ['雷', '無色'], name: '電球', dmg: 50 }], weak: '鬥', retreat: 1 },
+      { stage: '基礎', name: '小火龍', hp: 70, type: '火', attacks: [{ cost: ['火'], name: '火花', dmg: 30 }, { cost: ['火', '無色'], name: '噴射火焰', dmg: 60 }], weak: '水', retreat: 1 }
+    ]);
+    /* 等字型載入完再畫卡面，最多等 1.5 秒 */
+    Promise.race([document.fonts ? document.fonts.ready : Promise.resolve(), new Promise(r => setTimeout(r, 1500))]).then(go);
+  }
+  const t = document.getElementById('title');
+  t.innerHTML = [...'寶可夢卡牌訓練營'].map((c, i) =>
+    `<span aria-hidden="true" style="--i:${i}">${c}</span>`).join('');
+
+  /* 關卡節點 */
+  let currentSet = false;
+  PTCG.UNITS.forEach((u, i) => {
+    const box = document.querySelector(`.nodes[data-zone="${u.zone}"]`);
+    const stars = PTCG.getStars(u.id);
+    const unlocked = PTCG.isUnlocked(i);
+    const ready = PTCG.AVAILABLE.includes(u.id);
+    const el = document.createElement(unlocked && ready ? 'a' : 'button');
+    el.className = 'node';
+    if (stars > 0) el.classList.add('done');
+    if (!unlocked) el.classList.add('locked');
+    else if (!ready) el.classList.add('soon');
+    if (unlocked && stars === 0 && !currentSet) { el.classList.add('current'); currentSet = true; }
+    if (el.tagName === 'A') el.href = u.id === 'battle' ? 'units/battle.html' : `units/unit${String(u.no).padStart(2, '0')}.html`;
+    el.innerHTML = (el.classList.contains('current') ? '<span class="rays" aria-hidden="true"></span>' : '') + `
+      <span class="disc">${unlocked ? u.no : '🔒'}</span>
+      <span class="label">${u.name}</span>
+      <span class="stars" aria-label="${stars} 顆星">${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}</span>`;
+    if (el.tagName === 'BUTTON') {
+      el.onclick = () => toast(!unlocked ? `先完成上一關，就能打開「${u.name}」！` : `「${u.name}」正在製作中，敬請期待！`);
+    }
+    box.appendChild(el);
+  });
+
+  /* 用虛線把關卡串起來 */
+  const map = document.getElementById('map');
+  const path = document.querySelector('#path path');
+  function drawPath() {
+    const mr = map.getBoundingClientRect();
+    const pts = [...map.querySelectorAll('.node .disc')].map(d => {
+      const r = d.getBoundingClientRect();
+      return [r.left - mr.left + r.width / 2, r.top - mr.top + r.height / 2];
+    });
+    if (!pts.length) return;
+    let d = `M${pts[0][0]},${pts[0][1]}`;
+    for (let i = 1; i < pts.length; i++) {
+      const [x0, y0] = pts[i - 1], [x1, y1] = pts[i];
+      const my = (y0 + y1) / 2;
+      d += ` C${x0},${my} ${x1},${my} ${x1},${y1}`;
+    }
+    path.setAttribute('d', d);
+    const r0 = map.querySelector('.node .disc').getBoundingClientRect().width / 2 + 10;
+    document.getElementById('maskDots').innerHTML = pts.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="${r0}" fill="#000"/>`).join('');
+  }
+  window.addEventListener('resize', drawPath);
+  window.addEventListener('load', drawPath);
+  drawPath();
+
+  const tt = document.getElementById('toast');
+  let tm;
+  function toast(msg) {
+    tt.textContent = msg; tt.classList.add('show');
+    clearTimeout(tm); tm = setTimeout(() => tt.classList.remove('show'), 2400);
+  }
+})();
+</script>
+</body>
+</html>

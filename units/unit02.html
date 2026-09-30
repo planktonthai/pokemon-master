@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第 2 關：場地配置｜寶可夢卡牌訓練營</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🃏</text></svg>">
+<link rel="stylesheet" href="../assets/css/style.css">
+<style></style>
+</head>
+<body data-bgm="bgm_grassland" data-zone="grass">
+<div class="wrap">
+  <div class="topbar">
+    <a class="btn" href="../index.html?zone=grass">🗺 回地圖</a>
+    <span class="star-pill" aria-live="polite"></span>
+  </div>
+  <header class="unit-head">
+    <span class="tag" style="background:var(--grass)">新手草原・第 2 關</span>
+    <h1>場地配置</h1>
+    <p>對戰場地分成五個區域，每張卡都有自己的位置。認識它們，就能擺出漂亮的場地！</p>
+  </header>
+
+  <section class="lesson" id="L1" data-partner="snail" data-intro="這是你的對戰場地，我們一區一區來認識！">
+    <h2><span class="no">1</span>對戰場地的五個區域</h2>
+    <p>每位玩家都有一樣的場地，跟著動畫一區一區認識。</p>
+    <div class="stage " id="s1"></div>
+    <div class="caption" aria-live="polite"><span class="txt"></span></div>
+    <div class="controls"></div>
+  </section>
+  <section class="lesson" id="L2" data-partner="fruit" data-intro="數數看，備戰區可以放幾隻寶可夢？">
+    <h2><span class="no">2</span>戰鬥場和備戰區</h2>
+    <p>戰鬥場只能有 1 隻，備戰區最多 5 隻。</p>
+    <div class="stage " id="s2"></div>
+    <div class="caption" aria-live="polite"><span class="txt"></span></div>
+    <div class="controls"></div>
+  </section>
+  <section class="lesson">
+    <h2><span class="no">🎮</span>擺放小幫手</h2>
+    <p>點一張卡，再點牠應該放的位置。全部放對就過關！</p>
+    <div class="game" id="game"></div>
+  </section>
+  <section class="lesson">
+    <h2><span class="no">★</span>過關小測驗</h2>
+    <div class="quiz" id="quiz"></div>
+  </section>
+</div>
+
+<script src="../assets/js/audio.js"></script>
+<script src="../assets/js/common.js"></script>
+<script>
+(() => {
+  const { card, mini, sparkle, restart, Player } = PTCG;
+  PTCG.clouds();
+  PTCG.twinkles(document.querySelector('.unit-head'), 4);
+  PTCG.starPill(document.querySelector('.star-pill'));
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+  const hz = (stage, z) => { $$('.zone-box', stage).forEach(b => b.classList.toggle('hl', b.dataset.z === z)); };
+  const put = (el, html) => { el.insertAdjacentHTML('beforeend', html); const n = el.lastElementChild; if (!PTCG.fast) restart(n, 'pop-in'); return n; };
+  function matHTML(cls = '') {
+    return `<div class="mat ${cls}">
+      <div class="zone-box prize" data-z="prize"><span class="lbl">獎賞卡</span></div>
+      <div class="zone-box active" data-z="active"><span class="lbl">戰鬥場</span></div>
+      <div class="zone-box deck" data-z="deck"><span class="lbl">牌庫</span></div>
+      <div class="zone-box bench" data-z="bench"><span class="lbl">備戰區（最多 5 隻）</span></div>
+      <div class="zone-box discard" data-z="discard"><span class="lbl">棄牌區</span></div>
+    </div>`;
+  }
+  const nextHref = n => PTCG.AVAILABLE.includes('u' + n) ? 'unit' + String(n).padStart(2, '0') + '.html' : null;
+
+  const MONS = [{ name: '皮卡丘', type: '雷', hp: 60 }, { name: '小火龍', type: '火', hp: 70 }, { name: '傑尼龜', type: '水', hp: 60 }, { name: '妙蛙種子', type: '草', hp: 70 }, { name: '伊布', type: '無色', hp: 60 }];
+
+  /* ===== 動畫 1：五個區域 ===== */
+  const s1 = $('#s1');
+  new Player($('#L1'), {
+    reset() { s1.innerHTML = '<div style="width:100%">' + matHTML() + '</div>'; },
+    steps: [
+      { sfx: 'card_place', say: '戰鬥場：站在最前面、負責戰鬥的寶可夢，只能有 1 隻。', dur: 3800,
+        run() { hz(s1, 'active'); put($('[data-z=active]', s1), mini(MONS[0])); } },
+      { sfx: 'card_place', say: '備戰區：等著上場的寶可夢，最多可以放 5 隻。', dur: 4000,
+        run() { hz(s1, 'bench'); const b = $('[data-z=bench]', s1); [1, 2, 3].forEach((k, i) => this.wait(() => put(b, mini(MONS[k])), i * 250)); } },
+      { sfx: 'card_draw', say: '牌庫：你的牌組蓋著放在這裡，每個回合從這裡抽牌。', dur: 3800,
+        run() { hz(s1, 'deck'); put($('[data-z=deck]', s1), '<div class="stack">' + mini({ back: 1 }).repeat(4) + '</div>'); } },
+      { sfx: 'card_place', say: '棄牌區：用過的訓練家卡、昏厥的寶可夢，都正面朝上放在這裡。', dur: 4200,
+        run() { hz(s1, 'discard'); put($('[data-z=discard]', s1), mini({ name: '精靈球', trainer: '物品' })); } },
+      { sfx: 'star', say: '獎賞卡：開始時蓋著放 6 張。每擊倒對手 1 隻寶可夢，就可以拿 1 張！', dur: 4600,
+        run() { hz(s1, 'prize'); const p = $('[data-z=prize]', s1); for (let i = 0; i < 6; i++) this.wait(() => put(p, mini({ back: 1 })), i * 150); } },
+      { sfx: 'card_flip', say: '對手也有一模一樣的場地，兩個人面對面比賽！', dur: 4000,
+        run() { hz(s1, ''); s1.firstElementChild.insertAdjacentHTML('afterbegin', matHTML('opp')); const o = s1.querySelector('.mat.opp'); $('[data-z=active]', o).insertAdjacentHTML('beforeend', mini(MONS[4])); } }
+    ]
+  });
+
+  /* ===== 動畫 2：戰鬥場與備戰區 ===== */
+  const s2 = $('#s2');
+  new Player($('#L2'), {
+    reset() {
+      s2.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;position:relative">
+        <div class="mat" style="grid-template-columns:1fr;max-width:520px"><div class="zone-box active" data-z="active"><span class="lbl">戰鬥場（1 隻）</span></div><div class="zone-box bench" data-z="bench" style="grid-column:1"><span class="lbl">備戰區（最多 5 隻）</span></div></div>
+        <div id="extra" style="display:flex;gap:8px;align-items:center"></div></div>`;
+      put($('[data-z=active]', s2), mini(MONS[0]));
+      const b = $('[data-z=bench]', s2); MONS.slice(1).forEach(m => put(b, mini(m))); put(b, mini({ name: '可達鴨', type: '水', hp: 70 }));
+      put($('#extra', s2), mini({ name: '喵喵', type: '無色', hp: 60 }));
+    },
+    steps: [
+      { sfx: 'ui_click', say: '數數看：1、2、3、4、5，備戰區已經有 5 隻了。', dur: 4000,
+        run() { hz(s2, 'bench'); $$('[data-z=bench] .mini', s2).forEach((m, i) => this.wait(() => { restart(m, 'jump'); PTCG.sfx('ui_click', { vol: .5, rate: 1 + i * .12 }); }, i * 380)); } },
+      { sfx: 'wrong', say: '想再放第 6 隻？放不下！備戰區最多只能 5 隻喔。', dur: 4000,
+        run() { const e = $('#extra .mini', s2); restart(e, 'shake'); const x = document.createElement('div'); x.className = 'x-mark'; x.textContent = '✕'; x.style.right = '8%'; x.style.bottom = '0'; $('#extra', s2).parentElement.appendChild(x); } },
+      { sfx: 'knockout', say: '如果戰鬥場的寶可夢昏厥了，牠就要離開戰鬥場……', dur: 3600,
+        run() { hz(s2, 'active'); const a = $('[data-z=active] .mini', s2); if (a) { a.style.transform = 'rotate(90deg) scale(.6)'; a.style.opacity = '.3'; } } },
+      { sfx: 'card_place', say: '然後從自己的備戰區選 1 隻，換到戰鬥場上繼續比賽！', dur: 4200,
+        run() { const a = $('[data-z=active]', s2); a.querySelector('.mini') && a.querySelector('.mini').remove(); const pick = $('[data-z=bench] .mini', s2); a.appendChild(pick); if (!PTCG.fast) { restart(pick, 'pop-in'); sparkle(pick, 8); } hz(s2, 'active'); } }
+    ]
+  });
+
+  /* ===== 小遊戲 ===== */
+  PTCG.placeGame($('#game'), {
+    items: [
+      { html: mini(MONS[0]), zone: 'active', ok: '對！皮卡丘站到戰鬥場，準備戰鬥！' },
+      { html: mini(MONS[1]), zone: 'bench', ok: '對！小火龍在備戰區等待上場。', hint: '戰鬥場只能 1 隻，小火龍先去備戰區等等吧！' },
+      { html: mini(MONS[2]), zone: 'bench', ok: '對！傑尼龜也在備戰區待命。' },
+      { html: '<div class="stack">' + mini({ back: 1 }).repeat(3) + '</div>', zone: 'deck', ok: '對！蓋著的牌組放在牌庫。', hint: '這疊蓋著的牌，是還沒抽的牌組喔！' },
+      { html: mini({ name: '用過的好傷藥', trainer: '物品' }), zone: 'discard', ok: '對！用過的卡放進棄牌區。', hint: '用過的訓練家卡要放哪裡呢？' },
+      { html: mini({ back: 1 }) + mini({ back: 1 }) + mini({ back: 1 }), zone: 'prize', ok: '對！蓋著的獎賞卡，擊倒對手就能拿！', hint: '這幾張是比賽開始時蓋著放的特別卡片喔！' }
+    ],
+    zones: [
+      { id: 'prize', label: '🎁 獎賞卡' }, { id: 'active', label: '⚔️ 戰鬥場' }, { id: 'bench', label: '🪑 備戰區' },
+      { id: 'deck', label: '📚 牌庫' }, { id: 'discard', label: '🗑️ 棄牌區' }
+    ]
+  });
+
+  PTCG.quiz($('#quiz'), 'u2', [
+    { q: '戰鬥場上可以放幾隻寶可夢？', opts: ['1 隻', '3 隻', '5 隻'], a: 0, why: '戰鬥場只能有 1 隻寶可夢負責戰鬥。' },
+    { q: '備戰區最多可以放幾隻寶可夢？', opts: ['3 隻', '5 隻', '6 隻', '想放幾隻都可以'], a: 1, why: '備戰區最多 5 隻。' },
+    { q: '比賽開始時，要蓋著放幾張獎賞卡？', opts: ['3 張', '5 張', '6 張', '7 張'], a: 2, why: '獎賞卡一開始蓋著放 6 張。' },
+    { q: '用過的訓練家卡要放在哪裡？', opts: ['牌庫', '棄牌區', '備戰區', '獎賞卡'], a: 1, why: '用過的卡和昏厥的寶可夢都放進棄牌區。' },
+    { q: '擊倒對手 1 隻一般的寶可夢，可以拿幾張獎賞卡？', opts: ['1 張', '2 張', '3 張'], a: 0, why: '一般的寶可夢拿 1 張；寶可夢 ex 會多拿，第 8 關再學！' },
+    { q: '戰鬥場的寶可夢昏厥後，接下來誰上場？', opts: ['從牌庫抽一隻', '從自己的備戰區選 1 隻', '對手幫你選', '比賽直接結束'], a: 1, why: '從自己的備戰區選 1 隻換上戰鬥場。' }
+  ], nextHref(3), 'snail');
+
+})();
+</script>
+</body>
+</html>

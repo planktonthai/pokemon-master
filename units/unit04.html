@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第 4 關：回合流程｜寶可夢卡牌訓練營</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🃏</text></svg>">
+<link rel="stylesheet" href="../assets/css/style.css">
+<style>
+  .firstturn{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;max-width:640px}
+  .firstturn .col{background:#fff;border:3px solid var(--ink);border-radius:18px;padding:12px;box-shadow:0 5px 0 var(--ink)}
+  .firstturn h3{margin:0 0 8px;font-weight:400;font-size:20px;text-align:center}
+  .rule{display:flex;justify-content:space-between;align-items:center;font-size:18px;padding:6px 8px;border-radius:10px;margin:4px 0;opacity:0;transform:translateX(-20px);transition:all .45s var(--pop)}
+  .rule.show{opacity:1;transform:none}
+  .rule.no{background:#FFE3E6}
+  .rule.yes{background:#E4F7DE}
+  .rule b{font-size:22px}
+  .checkup{margin-top:12px;background:#EEF1FF;border:3px dashed var(--ink);border-radius:14px;padding:8px 14px;font-size:17px;opacity:0;transition:opacity .5s}
+  .checkup.show{opacity:1}
+</style>
+</head>
+<body data-bgm="bgm_grassland" data-zone="grass">
+<div class="wrap">
+  <div class="topbar">
+    <a class="btn" href="../index.html?zone=grass">🗺 回地圖</a>
+    <span class="star-pill" aria-live="polite"></span>
+  </div>
+  <header class="unit-head">
+    <span class="tag" style="background:var(--grass)">新手草原・第 4 關</span>
+    <h1>回合流程</h1>
+    <p>每個回合都有固定的步驟：抽牌、做事情、攻擊。學會了，你就能自己進行一整個回合！</p>
+  </header>
+
+  <section class="lesson" id="L1" data-partner="fruit" data-intro="輪到你的時候，要做哪些事呢？">
+    <h2><span class="no">1</span>回合的三個步驟</h2>
+    <p>每個回合都照這三步走。</p>
+    <div class="stage " id="s1"></div>
+    <div class="caption" aria-live="polite"><span class="txt"></span></div>
+    <div class="controls"></div>
+  </section>
+  <section class="lesson" id="L2" data-partner="cloud" data-intro="第二步可以做好多事，一個一個看！">
+    <h2><span class="no">2</span>回合中可以做的事</h2>
+    <p>第二步可以做很多事，重點是記住每件事「能做幾次」。</p>
+    <div class="stage " id="s2"></div>
+    <div class="caption" aria-live="polite"><span class="txt"></span></div>
+    <div class="controls"></div>
+  </section>
+  <section class="lesson" id="L3" data-partner="snail" data-intro="第一回合有特別的規則喔！">
+    <h2><span class="no">3</span>第一回合的特別規則</h2>
+    <p>先攻的人有一些限制，這樣比賽才公平。</p>
+    <div class="stage " id="s3"></div>
+    <div class="caption" aria-live="polite"><span class="txt"></span></div>
+    <div class="controls"></div>
+  </section>
+  <section class="lesson">
+    <h2><span class="no">🎮</span>這回合可以嗎？</h2>
+    <p>看看每張卡片上的情況，判斷「可以」還是「不行」。</p>
+    <div class="game" id="game"></div>
+  </section>
+  <section class="lesson">
+    <h2><span class="no">★</span>過關小測驗</h2>
+    <div class="quiz" id="quiz"></div>
+  </section>
+</div>
+
+<script src="../assets/js/audio.js"></script>
+<script src="../assets/js/common.js"></script>
+<script>
+(() => {
+  const { card, mini, sparkle, restart, Player } = PTCG;
+  PTCG.clouds();
+  PTCG.twinkles(document.querySelector('.unit-head'), 4);
+  PTCG.starPill(document.querySelector('.star-pill'));
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+  const hz = (stage, z) => { $$('.zone-box', stage).forEach(b => b.classList.toggle('hl', b.dataset.z === z)); };
+  const put = (el, html) => { el.insertAdjacentHTML('beforeend', html); const n = el.lastElementChild; if (!PTCG.fast) restart(n, 'pop-in'); return n; };
+  function matHTML(cls = '') {
+    return `<div class="mat ${cls}">
+      <div class="zone-box prize" data-z="prize"><span class="lbl">獎賞卡</span></div>
+      <div class="zone-box active" data-z="active"><span class="lbl">戰鬥場</span></div>
+      <div class="zone-box deck" data-z="deck"><span class="lbl">牌庫</span></div>
+      <div class="zone-box bench" data-z="bench"><span class="lbl">備戰區（最多 5 隻）</span></div>
+      <div class="zone-box discard" data-z="discard"><span class="lbl">棄牌區</span></div>
+    </div>`;
+  }
+  const nextHref = n => PTCG.AVAILABLE.includes('u' + n) ? 'unit' + String(n).padStart(2, '0') + '.html' : null;
+
+  /* ===== 動畫 1：三步驟 ===== */
+  const s1 = $('#s1');
+  new Player($('#L1'), {
+    reset() {
+      s1.innerHTML = `<div style="width:100%;display:flex;flex-direction:column;align-items:center;gap:16px">
+        <div class="track"><div class="stp" data-k="0"><b>🃏</b>① 抽 1 張牌</div><div class="stp" data-k="1"><b>🛠️</b>② 做各種事情</div><div class="stp" data-k="2"><b>⚔️</b>③ 攻擊</div><div class="stp" data-k="3"><b>🔁</b>換對手</div></div>
+        <div class="checkup" id="chk">🩺 寶可夢檢查：每個回合結束後，檢查中毒、灼傷等特殊狀態（第 7 關會學）。</div></div>`;
+    },
+    steps: [0, 1, 2, 3].map(k => ({
+      sfx: ['card_draw', 'energy_attach', 'attack_hit', 'ui_click'][k],
+      say: ['每個回合一開始，先從牌庫抽 1 張牌。', '接著可以做很多事情：放寶可夢、附能量、用訓練家卡……下一段動畫仔細看！', '最後可以讓戰鬥寶可夢攻擊。攻擊完，這個回合就結束了！', '然後換對手進行他的回合。攻擊不是一定要做，也可以直接說「回合結束」。'][k],
+      dur: 4200,
+      run() { $$('.stp', s1).forEach(e => e.classList.toggle('on', +e.dataset.k === k)); }
+    })).concat([{ sfx: 'star', say: '回合和回合之間，還有一個「寶可夢檢查」，之後會學到！', dur: 4200, run() { $('#chk', s1).classList.add('show'); } }])
+  });
+
+  /* ===== 動畫 2：可以做的事 ===== */
+  const s2 = $('#s2');
+  const ACTS = [
+    ['🪑 放基礎寶可夢到備戰區', '想放幾隻都可以', '備戰區最多 5 隻'],
+    ['⬆️ 讓寶可夢進化', '每隻每回合 1 次', '第 6 關會詳細教'],
+    ['⚡ 附能量', '每回合 1 張', '從手牌附到任何 1 隻自己的寶可夢'],
+    ['🎒 物品卡', '想用幾張都可以', ''],
+    ['🧑‍🏫 支援者卡', '每回合 1 張', '效果很強，所以限 1 張'],
+    ['🏟️ 競技場卡', '每回合 1 張', '放在場地中間，雙方都有效'],
+    ['🎽 寶可夢道具', '每隻寶可夢帶 1 個', ''],
+    ['🔄 撤退', '每回合 1 次', '要丟掉撤退費用的能量'],
+    ['✨ 使用特性', '照卡片上寫的', '有些寶可夢有特別能力']
+  ];
+  new Player($('#L2'), {
+    reset() {
+      s2.innerHTML = '<div class="tile-grid">' + ACTS.map(a => `<div class="tile hidden-card"><span class="cnt">${a[1]}</span><b style="font-weight:400;font-size:18px">${a[0]}</b><br><small>${a[2]}</small></div>`).join('') + '</div>';
+    },
+    steps: ACTS.map((a, i) => ({
+      sfx: 'card_place', dur: 2800,
+      say: a[0].replace(/^\S+\s/, '') + '：' + a[1] + (a[2] ? '。' + a[2] + '。' : '。'),
+      run() { const t = $$('.tile', s2)[i]; t.classList.remove('hidden-card'); restart(t, 'pop-in'); }
+    })).concat([{ sfx: 'star', say: '這些事情的順序可以自由安排，但「攻擊」一定是最後一件事！', dur: 4200,
+      run() { $$('.tile', s2).forEach((t, i) => this.wait(() => restart(t, 'jump'), i * 60)); } }])
+  });
+
+  /* ===== 動畫 3：第一回合 ===== */
+  const s3 = $('#s3');
+  const R = (cls, text, mark) => `<div class="rule ${cls}"><span>${text}</span><b>${mark}</b></div>`;
+  new Player($('#L3'), {
+    reset() {
+      s3.innerHTML = `<div class="firstturn">
+        <div class="col"><h3>🥇 先攻的人・第 1 回合</h3>${R('no', '攻擊', '❌')}${R('no', '使用支援者卡', '❌')}${R('no', '讓寶可夢進化', '❌')}${R('yes', '附能量、物品卡、放寶可夢', '⭕')}</div>
+        <div class="col"><h3>🥈 後攻的人・第 1 回合</h3>${R('yes', '攻擊', '⭕')}${R('yes', '使用支援者卡', '⭕')}${R('no', '讓寶可夢進化', '❌')}${R('yes', '附能量、物品卡、放寶可夢', '⭕')}</div></div>`;
+    },
+    steps: [
+      { sfx: 'wrong', say: '先攻的人，第一回合不能攻擊。', dur: 3600, run() { $$('.col', s3)[0].querySelectorAll('.rule')[0].classList.add('show'); } },
+      { sfx: 'wrong', say: '先攻的人，第一回合也不能用支援者卡。', dur: 3600, run() { $$('.col', s3)[0].querySelectorAll('.rule')[1].classList.add('show'); } },
+      { sfx: 'correct', say: '後攻的人第一回合就可以攻擊、也可以用支援者卡！', dur: 3800, run() { const r = $$('.col', s3)[1].querySelectorAll('.rule'); r[0].classList.add('show'); r[1].classList.add('show'); } },
+      { sfx: 'wrong', say: '不管先攻後攻，自己的第一回合都不能進化；剛放上場的寶可夢，那回合也不能進化。', dur: 5000, run() { $$('.col', s3).forEach(c => c.querySelectorAll('.rule')[2].classList.add('show')); } },
+      { sfx: 'star', say: '其他像附能量、物品卡、放寶可夢，兩個人都可以做！', dur: 4000, run() { $$('.col', s3).forEach(c => c.querySelectorAll('.rule')[3].classList.add('show')); } }
+    ]
+  });
+
+  /* ===== 小遊戲 ===== */
+  PTCG.yesNoGame($('#game'), { cards: [
+    { q: '這回合已經附了 1 張能量，想再附 1 張。', a: false, why: '每回合只能從手牌附 1 張能量。' },
+    { q: '這回合想用 3 張物品卡。', a: true, why: '物品卡想用幾張都可以！' },
+    { q: '我是先攻，第一回合想用「博士的研究」（支援者）。', a: false, why: '先攻的第一回合不能用支援者卡。' },
+    { q: '我是後攻，第一回合想攻擊。', a: true, why: '後攻的人第一回合就可以攻擊。' },
+    { q: '攻擊完之後，想再放 1 隻寶可夢到備戰區。', a: false, why: '攻擊完回合就結束了，要在攻擊前做。' },
+    { q: '這回合已經撤退 1 次，想再撤退 1 次。', a: false, why: '撤退每回合只能 1 次。' },
+    { q: '備戰區有 2 隻，想再放 2 隻基礎寶可夢。', a: true, why: '2 + 2 = 4 隻，沒超過 5 隻，可以！' },
+    { q: '這回合剛放上場的寶可夢，想馬上進化。', a: false, why: '剛放上場的寶可夢，要等下一回合才能進化。' }
+  ] });
+
+  PTCG.quiz($('#quiz'), 'u4', [
+    { q: '回合一開始，第一件事要做什麼？', opts: ['攻擊', '從牌庫抽 1 張牌', '附能量', '撤退'], a: 1, why: '每回合都從抽 1 張牌開始。' },
+    { q: '攻擊之後會發生什麼事？', opts: ['可以再攻擊一次', '回合結束，換對手', '可以再附能量', '要重新洗牌'], a: 1, why: '攻擊完回合就結束了。' },
+    { q: '先攻的人，第一回合「不能」做什麼？', opts: ['附能量', '攻擊', '放基礎寶可夢', '用物品卡'], a: 1, why: '先攻第一回合不能攻擊，也不能用支援者卡。' },
+    { q: '每回合可以撤退幾次？', opts: ['1 次', '2 次', '想幾次都可以'], a: 0, why: '撤退每回合 1 次。' },
+    { q: '每回合可以用幾張物品卡？', opts: ['1 張', '2 張', '想用幾張都可以'], a: 2, why: '物品卡沒有張數限制。' },
+    { q: '先攻和後攻的人，自己的第一回合都不能做什麼？', opts: ['進化', '附能量', '用物品卡', '放寶可夢到備戰區'], a: 0, why: '雙方的第一回合都不能進化。' }
+  ], nextHref(5), 'fruit');
+
+})();
+</script>
+</body>
+</html>

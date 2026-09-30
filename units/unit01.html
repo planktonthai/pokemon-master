@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第 1 關：認識卡牌｜寶可夢卡牌訓練營</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🃏</text></svg>">
+<link rel="stylesheet" href="../assets/css/style.css">
+<style>
+  .tray{display:flex;gap:6px;justify-content:center;min-height:40px;margin-top:10px}
+  .pool{display:flex;flex-direction:column;gap:14px}
+  .big-en{width:56px;height:56px;font-size:26px;border-width:3px;box-shadow:0 4px 0 var(--ink)}
+  .tray .big-en{width:34px;height:34px;font-size:16px;box-shadow:none}
+  .trainer-row .pcard{width:190px;min-height:280px}
+  #s2 .pcard{width:270px;min-height:360px}
+  .hidden-card{opacity:0;transform:scale(.3)}
+</style>
+</head>
+<body data-zone="grass">
+<div class="wrap">
+  <div class="topbar">
+    <a class="btn" href="../index.html?zone=grass">🗺 回地圖</a>
+    <span class="star-pill" aria-live="polite"></span>
+  </div>
+
+  <header class="unit-head">
+    <span class="tag">新手草原・第 1 關</span>
+    <h1>認識卡牌</h1>
+    <p>寶可夢卡牌遊戲只有三種卡。看完動畫、答對小測驗，就能拿到星星喔！</p>
+  </header>
+
+  <!-- 1. 三種卡 -->
+  <section class="lesson" id="L1" data-partner="cloud" data-intro="這裡有 3 張蓋著的卡，我們一張一張翻開來看！">
+    <h2><span class="no">1</span>三種卡牌</h2>
+    <p>每一副牌組都是由這三種卡組成的。</p>
+    <div class="stage" id="s1"></div>
+    <div class="caption" aria-live="polite"><span class="txt"></span></div>
+    <div class="controls"></div>
+  </section>
+
+  <!-- 2. 寶可夢卡 -->
+  <section class="lesson" id="L2" data-partner="fruit" data-intro="這是皮卡丘的卡。卡片上的每個地方都有意思喔！">
+    <h2><span class="no">2</span>寶可夢卡怎麼看</h2>
+    <p>跟著紅色的標籤，一格一格認識卡片上的資訊。</p>
+    <div class="stage" id="s2"></div>
+    <div class="caption" aria-live="polite"><span class="txt"></span></div>
+    <div class="controls"></div>
+  </section>
+
+  <!-- 3. 能量卡 -->
+  <section class="lesson" id="L3" data-partner="cloud" data-intro="皮卡丘想使出招式，需要能量幫忙！">
+    <h2><span class="no">3</span>能量卡：招式的電池</h2>
+    <p>招式左邊的小圓圈，就是需要的能量。</p>
+    <div class="stage" id="s3"></div>
+    <div class="caption" aria-live="polite"><span class="txt"></span></div>
+    <div class="controls"></div>
+  </section>
+
+  <!-- 4. 訓練家卡 -->
+  <section class="lesson" id="L4" data-partner="snail" data-intro="訓練家卡有四種，每一種的使用規則都不一樣！">
+    <h2><span class="no">4</span>訓練家卡四兄弟</h2>
+    <p>訓練家卡是你的好幫手，重點是記住每種卡「一回合能用幾張」。</p>
+    <div class="stage trainer-row" id="s4"></div>
+    <div class="caption" aria-live="polite"><span class="txt"></span></div>
+    <div class="controls"></div>
+  </section>
+
+  <!-- 5. 測驗 -->
+  <section class="lesson">
+    <h2><span class="no">★</span>過關小測驗</h2>
+    <div class="quiz" id="quiz"></div>
+  </section>
+</div>
+
+<script src="../assets/vendor/three.min.js"></script>
+<script src="../assets/js/fx3d.js"></script>
+<script src="../assets/js/audio.js"></script>
+<script src="../assets/js/common.js"></script>
+<script>
+(() => {
+  const { card, energy, sparkle, restart, Player } = PTCG;
+  PTCG.clouds();
+  PTCG.twinkles(document.querySelector('.unit-head'), 4);
+  PTCG.starPill(document.querySelector('.star-pill'));
+
+  const PIKACHU = {
+    kind: 'pokemon', stage: '基礎', name: '皮卡丘', hp: 60, type: '雷',
+    attacks: [
+      { cost: ['雷'], name: '電擊', dmg: 20 },
+      { cost: ['雷', '無色'], name: '電球', dmg: 50 }
+    ],
+    weak: '鬥', resist: null, retreat: 1
+  };
+
+  /* 共用：標籤指向某個部位 */
+  function pointAt(stage, part, text) {
+    let p = stage.querySelector('.pointer');
+    if (!p) { p = document.createElement('div'); p.className = 'pointer'; stage.appendChild(p); }
+    stage.querySelectorAll('.hl').forEach(e => e.classList.remove('hl'));
+    const el = stage.querySelector(`[data-part="${part}"]`);
+    if (!el) return;
+    el.classList.add('hl');
+    p.textContent = text;
+    p.style.opacity = 1;
+    const sr = stage.getBoundingClientRect(), er = el.getBoundingClientRect();
+    const card = el.closest('.pcard') || el;
+    const cr = card.getBoundingClientRect();
+    const pw = p.offsetWidth, ph = p.offsetHeight;
+    const partMid = er.left + er.width / 2, cardMid = cr.left + cr.width / 2;
+    let left = partMid >= cardMid ? cr.right - sr.left + 16 : cr.left - sr.left - pw - 16;
+    let top = er.top - sr.top + er.height / 2 - ph / 2;
+    if (left < 6 || left + pw > sr.width - 6) {          /* 空間不夠（手機）：放在卡片上方 */
+      left = Math.min(Math.max(6, partMid - sr.left - pw / 2), sr.width - pw - 6);
+      top = cr.top - sr.top - ph - 10;
+    }
+    p.style.left = left + 'px';
+    p.style.top = Math.max(4, top) + 'px';
+    if (partMid >= cardMid && p.textContent.startsWith('👉')) p.textContent = '👈' + p.textContent.slice(2);
+  }
+  function clearPoint(stage) {
+    stage.querySelectorAll('.hl').forEach(e => e.classList.remove('hl'));
+    const p = stage.querySelector('.pointer'); if (p) p.style.opacity = 0;
+  }
+
+  /* 共用：把元素飛到新位置 */
+  function fly(el, target) {
+    const a = el.getBoundingClientRect();
+    target.appendChild(el);
+    if (PTCG.fast) return;
+    const b = el.getBoundingClientRect();
+    el.animate([
+      { transform: `translate(${a.left - b.left}px,${a.top - b.top}px) scale(1.4)` },
+      { transform: 'translate(0,0) scale(1)' }
+    ], { duration: 700, easing: 'cubic-bezier(.34,1.6,.5,1)' });
+  }
+
+  /* ===== 動畫 1：三種卡 ===== */
+  const s1 = document.getElementById('s1');
+  const faces = [
+    card(PIKACHU),
+    card({ kind: 'energy', type: '雷' }),
+    card({ kind: 'trainer', sub: '支援者', name: '博士的研究', icon: '📚', text: '把自己的手牌全部丟掉，再從牌庫抽 7 張。' })
+  ];
+  new Player(document.getElementById('L1'), {
+    reset() {
+      s1.innerHTML = faces.map(f => `<div class="flip"><div class="inner">
+        <div class="face"><div class="card-back">卡牌訓練營</div></div>
+        <div class="face front">${f}</div></div></div>`).join('');
+    },
+    steps: [
+      { sfx: 'card_flip', say: '第 1 種：寶可夢卡！牠們會站上場，跟對手的寶可夢比賽。', dur: 3400,
+        run() { const f = s1.children[0]; f.classList.add('open'); this.wait(() => sparkle(f), 400); } },
+      { sfx: 'card_flip', say: '第 2 種：能量卡！寶可夢要有能量，才能使出招式。', dur: 3400,
+        run() { const f = s1.children[1]; f.classList.add('open'); this.wait(() => sparkle(f), 400); } },
+      { sfx: 'card_flip', say: '第 3 種：訓練家卡！可以抽牌、找寶可夢、幫忙回復，是你的祕密武器。', dur: 3800,
+        run() { const f = s1.children[2]; f.classList.add('open'); this.wait(() => sparkle(f), 400); } },
+      { sfx: 'star', say: '記住口訣：寶可夢打架、能量充電、訓練家幫忙！', dur: 3600,
+        run() { [...s1.children].forEach((f, i) => this.wait(() => restart(f, 'jump'), i * 150)); } }
+    ]
+  });
+
+  /* ===== 動畫 2：寶可夢卡怎麼看 ===== */
+  const s2 = document.getElementById('s2');
+  const L2parts = [
+    ['name', '名字', '最上面是寶可夢的名字：皮卡丘。'],
+    ['stage', '進化階段', '「基礎」代表牠可以直接放到場上。進化的寶可夢要等到第 6 關再學！'],
+    ['hp', 'HP 體力', 'HP 是體力。皮卡丘有 60 點，受到的傷害累積到 60，就會「昏厥」退場。'],
+    ['type', '屬性', '皮卡丘是「雷」屬性。屬性會影響弱點和抗性。'],
+    ['atk0', '招式', '這是招式「電擊」。左邊是需要的能量，右邊的 20 是傷害。'],
+    ['atk1', '招式', '第二招「電球」需要 2 個能量，傷害 50，比較強但比較難準備。'],
+    ['weak', '弱點', '弱點是「鬥」。被鬥屬性的寶可夢攻擊時，傷害變成 2 倍！'],
+    ['resist', '抗性', '抗性是被某種屬性攻擊時，傷害會變少。皮卡丘沒有抗性，所以是「—」。'],
+    ['retreat', '撤退', '撤退要丟掉 1 個能量，才能把皮卡丘換回備戰區休息。']
+  ];
+  new Player(document.getElementById('L2'), {
+    reset() { s2.innerHTML = card(PIKACHU); },
+    steps: L2parts.map(([part, label, say]) => ({
+      say, dur: 3600,
+      run() { pointAt(s2, part, '👉 ' + label); }
+    })).concat([{ say: '你已經會看寶可夢卡了！下次拿到卡片，先找這幾個地方。', dur: 3400,
+      run() { clearPoint(s2); const c = s2.querySelector('.pcard'); restart(c, 'jump'); sparkle(c, 12); } }])
+  });
+
+  /* ===== 動畫 3：能量卡 ===== */
+  const s3 = document.getElementById('s3');
+  const big = t => energy(t).replace('class="en', 'class="en big-en');
+  new Player(document.getElementById('L3'), {
+    reset() {
+      s3.innerHTML = `
+        <div style="text-align:center"><div style="font-size:15px;margin-bottom:6px">手牌裡的能量</div><div class="pool" id="pool" style="align-items:center">${big('雷')}${big('火')}${big('水')}</div></div>
+        <div><div id="c3">${card(PIKACHU)}</div><div style="text-align:center;font-size:15px;margin-top:8px">已附上的能量</div><div class="tray" id="tray" aria-label="已附上的能量"></div></div>`;
+    },
+    steps: [
+      { say: '「電擊」需要 1 個雷能量。', dur: 2800, run() { pointAt(s3, 'cost0', '需要 1 個雷'); } },
+      { sfx: 'energy_attach', say: '把雷能量附到皮卡丘身上！', dur: 2800,
+        run() { clearPoint(s3); fly(s3.querySelector('#pool .t-lightning'), s3.querySelector('#tray')); } },
+      { sfx: 'attack_zap', say: '能量夠了，可以使出「電擊」！', dur: 3000,
+        run() { pointAt(s3, 'atk0', '可以用了！'); sparkle(s3.querySelector('[data-part="atk0"]'), 10, ['⚡'], 'zap'); } },
+      { say: '「電球」還要多 1 個 ★。★ 是「無色」，任何能量都可以代替它！', dur: 4200,
+        run() { pointAt(s3, 'cost1', '★ = 任何能量'); } },
+      { sfx: 'energy_attach', say: '下一回合，再附 1 個水能量上去。', dur: 3000,
+        run() { clearPoint(s3); fly(s3.querySelector('#pool .t-water'), s3.querySelector('#tray')); } },
+      { sfx: 'attack_super', say: '雷 + 水，剛好符合「雷 + ★」，可以使出「電球」了！', dur: 3600,
+        run() { pointAt(s3, 'atk1', '50 點傷害！'); sparkle(s3.querySelector('[data-part="atk1"]'), 14, ['⚡', '✨'], 'zap'); } },
+      { say: '重要規則：每一回合，只能從手牌附 1 張能量喔！', dur: 3600,
+        run() { clearPoint(s3); restart(s3.querySelector('#tray'), 'jump'); } }
+    ]
+  });
+
+  /* ===== 動畫 4：訓練家卡 ===== */
+  const s4 = document.getElementById('s4');
+  const trainers = [
+    { sub: '物品', name: '精靈球', icon: '🎯', text: '從牌庫找 1 張寶可夢放到手牌。', rule: '一回合可以用很多張', say: '「物品」卡：一回合想用幾張，就用幾張！' },
+    { sub: '支援者', name: '博士的研究', icon: '📚', text: '丟掉手牌，再抽 7 張。', rule: '一回合只能用 1 張', say: '「支援者」卡：效果很強，所以一回合只能用 1 張。' },
+    { sub: '寶可夢道具', name: '力量頭帶', icon: '🎽', text: '帶著它的寶可夢，招式傷害 +10。', rule: '每隻寶可夢只能帶 1 個', say: '「寶可夢道具」：貼在寶可夢身上，每隻只能帶 1 個。' },
+    { sub: '競技場', name: '訓練道館', icon: '🏟', text: '雙方的寶可夢撤退時都少 1 個能量。', rule: '放在中間，雙方都有效', say: '「競技場」卡：放在場地中間，兩個玩家都會受到影響！' }
+  ];
+  new Player(document.getElementById('L4'), {
+    reset() {
+      s4.innerHTML = trainers.map(t => card({ kind: 'trainer', ...t })).join('');
+      [...s4.children].forEach(c => c.classList.add('hidden-card'));
+    },
+    steps: trainers.map((t, i) => ({
+      sfx: 'card_place', say: t.say, dur: 3800,
+      run() {
+        [...s4.children].forEach((c, k) => { if (k < i) { c.classList.remove('pop-in', 'jump'); c.classList.add('dim'); c.querySelectorAll('.hl').forEach(e => e.classList.remove('hl')); } });
+        const c = s4.children[i];
+        c.classList.remove('hidden-card', 'dim');
+        restart(c, 'pop-in');
+        this.wait(() => { c.querySelector('[data-part="rule"]').classList.add('hl'); sparkle(c, 8); }, 500);
+      }
+    })).concat([{ say: '四兄弟都認識了！最常考的是：支援者一回合只能用 1 張。', dur: 3800,
+      run() { [...s4.children].forEach((c, i) => { c.classList.remove('dim', 'pop-in'); this.wait(() => restart(c, 'jump'), i * 140); }); } }])
+  });
+
+  /* ===== 測驗 ===== */
+  PTCG.quiz(document.getElementById('quiz'), 'u1', [
+    { q: '哪一種卡可以站上場跟對手比賽？', opts: ['寶可夢卡', '能量卡', '訓練家卡'], a: 0, why: '寶可夢卡負責上場戰鬥。' },
+    { q: '皮卡丘 HP 60，已經受到 40 點傷害，再受到幾點傷害就會昏厥？', opts: ['10 點', '20 點', '60 點', '100 點'], a: 1, why: '60 − 40 = 20，再受到 20 點就剛好用完 HP。' },
+    { q: '被「弱點」屬性的寶可夢攻擊時，傷害會怎樣？', opts: ['變成 0', '少 30 點', '變成 2 倍', '不會改變'], a: 2, why: '弱點會讓傷害變成 2 倍。' },
+    { q: '招式左邊的 ★ 代表什麼？', opts: ['要翻硬幣', '任何能量都可以', '只能用雷能量', '這招不能用'], a: 1, why: '★ 是無色能量，任何種類的能量都可以代替。' },
+    { q: '每一回合可以從手牌附幾張能量？', opts: ['1 張', '2 張', '想附幾張都可以'], a: 0, why: '每回合只能附 1 張能量，所以要想好附給誰。' },
+    { q: '「支援者」卡一回合可以用幾張？', opts: ['1 張', '2 張', '想用幾張都可以'], a: 0, why: '支援者效果很強，一回合只能用 1 張。' }
+  ], PTCG.AVAILABLE.includes('u2') ? 'unit02.html' : null, 'fruit');
+})();
+</script>
+</body>
+</html>

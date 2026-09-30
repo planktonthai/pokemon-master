@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第 3 關：開始準備｜寶可夢卡牌訓練營</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🃏</text></svg>">
+<link rel="stylesheet" href="../assets/css/style.css">
+<style>
+  .prep{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%}
+  .prep .row{display:flex;gap:18px;align-items:center;justify-content:center;flex-wrap:wrap;min-height:96px}
+  .prep .mat{max-width:560px}
+  .deckpile{position:relative;width:64px;height:88px}
+  .deckpile .mini{position:absolute;left:0;top:0;transition:transform .3s}
+  .deckpile.shuffle .mini:nth-child(odd){animation:shufA .5s ease-in-out 3}
+  .deckpile.shuffle .mini:nth-child(even){animation:shufB .5s ease-in-out 3}
+  @keyframes shufA{50%{transform:translateX(-38px) rotate(-8deg)}}
+  @keyframes shufB{50%{transform:translateX(38px) rotate(8deg)}}
+  .opp-hand{display:flex;gap:4px;align-items:center;font-size:16px}
+  .opp-hand .mini{transform:scale(.7);margin:-10px}
+</style>
+</head>
+<body data-bgm="bgm_grassland" data-zone="grass">
+<div class="wrap">
+  <div class="topbar">
+    <a class="btn" href="../index.html?zone=grass">🗺 回地圖</a>
+    <span class="star-pill" aria-live="polite"></span>
+  </div>
+  <header class="unit-head">
+    <span class="tag" style="background:var(--grass)">新手草原・第 3 關</span>
+    <h1>開始準備</h1>
+    <p>比賽前要洗牌、抽牌、放寶可夢和獎賞卡。學會準備步驟，就能自己開一場比賽！</p>
+  </header>
+
+  <section class="lesson" id="L1" data-partner="cloud" data-intro="比賽開始前，要先做好準備喔！">
+    <h2><span class="no">1</span>比賽前的準備步驟</h2>
+    <p>跟著步驟做，比賽就能順利開始。</p>
+    <div class="stage " id="s1"></div>
+    <div class="caption" aria-live="polite"><span class="txt"></span></div>
+    <div class="controls"></div>
+  </section>
+  <section class="lesson" id="L2" data-partner="snail" data-intro="如果抽到的 7 張裡面，一隻基礎寶可夢都沒有……">
+    <h2><span class="no">2</span>沒有基礎寶可夢怎麼辦？</h2>
+    <p>手牌沒有基礎寶可夢時要「重抽」。</p>
+    <div class="stage " id="s2"></div>
+    <div class="caption" aria-live="polite"><span class="txt"></span></div>
+    <div class="controls"></div>
+  </section>
+  <section class="lesson">
+    <h2><span class="no">🎮</span>準備順序大挑戰</h2>
+    <p>把比賽前的準備步驟，照正確的順序點出來！</p>
+    <div class="game" id="game"></div>
+  </section>
+  <section class="lesson">
+    <h2><span class="no">★</span>過關小測驗</h2>
+    <div class="quiz" id="quiz"></div>
+  </section>
+</div>
+
+<script src="../assets/js/audio.js"></script>
+<script src="../assets/js/common.js"></script>
+<script>
+(() => {
+  const { card, mini, sparkle, restart, Player } = PTCG;
+  PTCG.clouds();
+  PTCG.twinkles(document.querySelector('.unit-head'), 4);
+  PTCG.starPill(document.querySelector('.star-pill'));
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+  const hz = (stage, z) => { $$('.zone-box', stage).forEach(b => b.classList.toggle('hl', b.dataset.z === z)); };
+  const put = (el, html) => { el.insertAdjacentHTML('beforeend', html); const n = el.lastElementChild; if (!PTCG.fast) restart(n, 'pop-in'); return n; };
+  function matHTML(cls = '') {
+    return `<div class="mat ${cls}">
+      <div class="zone-box prize" data-z="prize"><span class="lbl">獎賞卡</span></div>
+      <div class="zone-box active" data-z="active"><span class="lbl">戰鬥場</span></div>
+      <div class="zone-box deck" data-z="deck"><span class="lbl">牌庫</span></div>
+      <div class="zone-box bench" data-z="bench"><span class="lbl">備戰區（最多 5 隻）</span></div>
+      <div class="zone-box discard" data-z="discard"><span class="lbl">棄牌區</span></div>
+    </div>`;
+  }
+  const nextHref = n => PTCG.AVAILABLE.includes('u' + n) ? 'unit' + String(n).padStart(2, '0') + '.html' : null;
+
+  const PIKA = { name: '皮卡丘', type: '雷', hp: 60 }, BULB = { name: '妙蛙種子', type: '草', hp: 70 };
+
+  /* ===== 動畫 1：準備步驟 ===== */
+  const s1 = $('#s1');
+  new Player($('#L1'), {
+    reset() {
+      s1.innerHTML = `<div class="prep">
+        <div class="row"><div class="coin" id="coin">?</div><div class="deckpile" id="deck">${mini({ back: 1 }).repeat(5)}</div></div>
+        <div class="row hand" id="hand"></div>
+        ${matHTML()}</div>`;
+    },
+    steps: [
+      { sfx: 'card_flip', say: '先擲硬幣或猜拳，贏的人決定要「先攻」還是「後攻」。', dur: 4000,
+        run() { const c = $('#coin', s1); c.textContent = '?'; restart(c, 'spin'); this.wait(() => { c.textContent = '先'; sparkle(c, 8); }, 1300); } },
+      { sfx: 'card_draw', say: '把 60 張的牌組洗乾淨，蓋著放在牌庫區。', dur: 3800,
+        run() { const d = $('#deck', s1); restart(d, 'shuffle'); hz(s1, 'deck'); this.wait(() => put($('[data-z=deck]', s1), '<div class="stack">' + mini({ back: 1 }).repeat(3) + '</div>'), 1400); } },
+      { sfx: 'card_draw', say: '從牌庫最上面抽 7 張，當作手牌。', dur: 4200,
+        run() { hz(s1, ''); const h = $('#hand', s1); const cards = [PIKA, { name: '雷能量', type: '雷' }, BULB, { name: '精靈球', trainer: '物品' }, { name: '草能量', type: '草' }, { name: '好傷藥', trainer: '物品' }, { name: '雷能量', type: '雷' }];
+          cards.forEach((c, i) => this.wait(() => { put(h, mini(c)); PTCG.sfx('card_draw', { vol: .5 }); }, i * 180)); } },
+      { sfx: 'card_place', say: '從手牌選 1 隻「基礎寶可夢」，蓋著放到戰鬥場。', dur: 4000,
+        run() { hz(s1, 'active'); const h = $('#hand', s1); const m = h.children[0]; m && m.remove(); put($('[data-z=active]', s1), mini({ back: 1 })); } },
+      { sfx: 'card_place', say: '手上還有其他基礎寶可夢的話，也可以蓋著放到備戰區。', dur: 4000,
+        run() { hz(s1, 'bench'); const h = $('#hand', s1); const m = h.children[1]; m && m.remove(); put($('[data-z=bench]', s1), mini({ back: 1 })); } },
+      { sfx: 'card_draw', say: '從牌庫上面拿 6 張，不能偷看，蓋著放到獎賞卡區。', dur: 4200,
+        run() { hz(s1, 'prize'); const p = $('[data-z=prize]', s1); for (let i = 0; i < 6; i++) this.wait(() => put(p, mini({ back: 1 })), i * 150); } },
+      { sfx: 'star', say: '雙方都準備好了！一起把寶可夢翻到正面，比賽開始！', dur: 4200,
+        run() { hz(s1, ''); const a = $('[data-z=active]', s1), b = $('[data-z=bench]', s1);
+          a.innerHTML = '<span class="lbl">戰鬥場</span>'; b.innerHTML = '<span class="lbl">備戰區（最多 5 隻）</span>';
+          sparkle(put(a, mini(PIKA)), 10); put(b, mini(BULB)); } }
+    ]
+  });
+
+  /* ===== 動畫 2：重抽 ===== */
+  const s2 = $('#s2');
+  const NOBASIC = [{ name: '雷能量', type: '雷' }, { name: '火能量', type: '火' }, { name: '精靈球', trainer: '物品' }, { name: '博士的研究', trainer: '支援者' }, { name: '水能量', type: '水' }, { name: '好傷藥', trainer: '物品' }, { name: '草能量', type: '草' }];
+  new Player($('#L2'), {
+    reset() {
+      s2.innerHTML = `<div class="prep"><div class="row"><div class="deckpile" id="deck2">${mini({ back: 1 }).repeat(5)}</div><div class="opp-hand" id="opp">對手手牌：${mini({ back: 1 }).repeat(7)}</div></div><div class="row hand" id="hand2"></div></div>`;
+      const h = $('#hand2', s2); NOBASIC.forEach(c => h.insertAdjacentHTML('beforeend', mini(c)));
+    },
+    steps: [
+      { sfx: 'wrong', say: '糟糕！7 張手牌裡，一隻基礎寶可夢都沒有。', dur: 3800,
+        run() { $$('#hand2 .mini', s2).forEach((m, i) => this.wait(() => restart(m, 'shake'), i * 80)); } },
+      { sfx: 'card_flip', say: '把手牌翻給對手看，證明真的沒有基礎寶可夢。', dur: 4000,
+        run() { $$('#hand2 .mini', s2).forEach(m => { m.style.transform = 'translateY(-14px)'; m.style.boxShadow = '0 0 0 3px #FFCE3A, 0 0 14px #FFCE3A'; }); } },
+      { sfx: 'card_draw', say: '然後把手牌洗回牌庫，重新抽 7 張。這叫做「重抽」。', dur: 4200,
+        run() { const h = $('#hand2', s2); h.innerHTML = ''; restart($('#deck2', s2), 'shuffle');
+          const again = [{ name: '小火龍', type: '火', hp: 70 }, { name: '火能量', type: '火' }, { name: '精靈球', trainer: '物品' }, { name: '皮卡丘', type: '雷', hp: 60 }, { name: '雷能量', type: '雷' }, { name: '好傷藥', trainer: '物品' }, { name: '火能量', type: '火' }];
+          again.forEach((c, i) => this.wait(() => put(h, mini(c)), 1200 + i * 150)); } },
+      { sfx: 'star', say: '這次有基礎寶可夢了！可以開始準備。', dur: 3600,
+        run() { $$('#hand2 .mini', s2).forEach(m => { if (/小火龍|皮卡丘/.test(m.textContent)) { restart(m, 'jump'); sparkle(m, 6); } }); } },
+      { sfx: 'card_draw', say: '要注意：你每重抽 1 次，對手就可以多抽 1 張牌喔！', dur: 4400,
+        run() { const o = $('#opp', s2); const n = put(o, mini({ back: 1 })); n.style.boxShadow = '0 0 0 3px #FF5E6C, 0 0 14px #FF5E6C'; } }
+    ]
+  });
+
+  /* ===== 小遊戲 ===== */
+  PTCG.orderGame($('#game'), { steps: ['🪙 決定先攻或後攻', '🔀 把牌組洗乾淨', '✋ 抽 7 張手牌', '🙈 蓋著放基礎寶可夢', '🎁 蓋著放 6 張獎賞卡', '✨ 翻開寶可夢，開始比賽！'] });
+
+  PTCG.quiz($('#quiz'), 'u3', [
+    { q: '比賽開始時，要抽幾張手牌？', opts: ['5 張', '6 張', '7 張', '10 張'], a: 2, why: '一開始抽 7 張手牌。' },
+    { q: '手牌裡沒有基礎寶可夢，要怎麼辦？', opts: ['直接輸掉', '給對手看，洗回牌庫重抽', '跟對手借一隻', '放能量卡代替'], a: 1, why: '這叫「重抽」，給對手看過後洗回去重新抽 7 張。' },
+    { q: '對手重抽了 2 次，你可以怎麼做？', opts: ['多抽 2 張牌', '多拿 2 張獎賞卡', '對手直接輸', '什麼都不會發生'], a: 0, why: '對手每重抽 1 次，你就可以多抽 1 張。' },
+    { q: '準備時，戰鬥場的寶可夢要怎麼放？', opts: ['正面朝上', '蓋著（背面朝上）', '先不用放', '放在手上'], a: 1, why: '先蓋著放，等雙方都準備好再一起翻開。' },
+    { q: '獎賞卡要從哪裡拿？', opts: ['從手牌選 6 張', '從牌庫上面拿 6 張', '從棄牌區拿', '對手給你'], a: 1, why: '從牌庫最上面拿 6 張，不能偷看。' },
+    { q: '準備時可以放到場上的是哪一種卡？', opts: ['基礎寶可夢', '能量卡', '支援者卡', '進化寶可夢'], a: 0, why: '準備時只能放基礎寶可夢。' }
+  ], nextHref(4), 'cloud');
+
+})();
+</script>
+</body>
+</html>

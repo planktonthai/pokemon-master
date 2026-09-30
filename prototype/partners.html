@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>夥伴小怪獸設計稿｜寶可夢卡牌訓練營</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
+<link rel="stylesheet" href="../assets/css/style.css">
+<style>
+  html,body{height:100%;overflow:hidden;background:#BFE3FF}
+  #stage3d{position:fixed;inset:0;touch-action:none}
+  #stage3d canvas{display:block;width:100%;height:100%}
+  .hud{position:fixed;left:0;right:0;top:0;z-index:10;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;pointer-events:none}
+  .hud > *{pointer-events:auto}
+  .title-pill{font-family:'Noto Sans TC',var(--round);font-weight:900;font-size:22px;background:linear-gradient(180deg,#FFF6C8,#FFCE3A);border:3px solid var(--ink);border-radius:16px;padding:4px 16px;box-shadow:0 5px 0 var(--ink)}
+  .cards{position:fixed;left:0;right:0;bottom:0;z-index:10;display:flex;gap:12px;justify-content:center;padding:0 12px 14px;pointer-events:none;flex-wrap:nowrap;overflow-x:auto}
+  .pcard-info{
+    pointer-events:auto;cursor:pointer;flex:0 0 min(320px,86vw);text-align:left;
+    background:#fff;border:3px solid var(--ink);border-radius:20px;box-shadow:0 6px 0 var(--ink);
+    padding:10px 14px 12px;font-family:inherit;font-size:15px;line-height:1.55;color:var(--ink);
+    transition:transform .25s var(--pop),box-shadow .25s
+  }
+  .pcard-info:hover{transform:translateY(-4px)}
+  .pcard-info.on{box-shadow:0 6px 0 var(--ink),0 0 0 4px var(--c),0 0 24px 6px var(--c)}
+  .pcard-info h2{margin:0 0 4px;font-size:22px;font-weight:400;display:flex;align-items:center;gap:8px}
+  .pcard-info .type{font-size:13px;color:#fff;background:var(--c);border:2px solid var(--ink);border-radius:10px;padding:0 8px;-webkit-text-stroke:0}
+  .pcard-info dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:1px 8px}
+  .pcard-info dt{font-weight:400;color:#6A6A80;white-space:nowrap}
+  .pcard-info dd{margin:0}
+  .hint{position:fixed;left:50%;top:70px;transform:translateX(-50%);z-index:10;background:rgba(31,42,92,.82);color:#fff;border-radius:14px;padding:6px 16px;font-size:15px;white-space:nowrap;transition:opacity .6s}
+  .loading{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:radial-gradient(circle at 50% 40%,#E9F7FF,#9ED3FF);transition:opacity .8s}
+  .loading .spin{width:64px;height:64px;border-radius:50%;border:6px solid #fff;border-top-color:#FFCE3A;animation:spin 1s linear infinite}
+  .loading p{font-size:20px;margin:0;text-align:center;max-width:420px}
+  @media (max-width:760px){ .cards{justify-content:flex-start} .title-pill{font-size:18px} .hint{font-size:13px;top:64px} }
+</style>
+</head>
+<body>
+<div id="stage3d" aria-label="夥伴小怪獸 3D 展示台"></div>
+<div class="hud">
+  <span class="title-pill">🐾 夥伴小怪獸・設計稿</span>
+  <span id="sound"></span>
+</div>
+<div class="hint" id="hint">點小怪獸或下方卡片看牠的動作・拖曳可以轉動視角</div>
+<div class="cards" id="cards"></div>
+<div class="loading" id="loading"><div class="spin"></div><p>小怪獸們正在集合…</p></div>
+
+<script>
+  (function(){
+    function fail(msg){ var L=document.getElementById('loading'); if(L) L.innerHTML='<p>😵 載入失敗</p><p style="font-size:17px">'+msg+'</p>'; }
+    window.__fail = fail;
+    window.addEventListener('error', function(e){
+      if (e.target && (e.target.tagName==='SCRIPT' || e.target.tagName==='LINK')) fail('找不到網站的程式檔。請先把 zip「全部解壓縮」再開啟，或改開 partners-standalone.html。');
+    }, true);
+  })();
+</script>
+<script src="../assets/vendor/three.min.js"></script>
+<script src="../assets/vendor/three-post.js"></script>
+<script src="../assets/js/audio.js"></script>
+<script>
+(() => {
+  if (typeof THREE === 'undefined' || typeof PTCGAudio === 'undefined') { __fail('找不到網站的程式檔。請先把 zip「全部解壓縮」再開啟，或改開 partners-standalone.html。'); return; }
+  if (!document.createElement('canvas').getContext('webgl')) { __fail('這個瀏覽器不支援 3D（WebGL）。請改用最新版的 Chrome、Edge 或 Safari。'); return; }
+  const T = THREE;
+  PTCGAudio.init('../assets/audio/');
+  PTCGAudio.button(document.getElementById('sound'));
+  PTCGAudio.preload(['attack_zap', 'attack_fire', 'attack_water', 'star']);
+
+  /* ================= 基本設定 ================= */
+  const host = document.getElementById('stage3d');
+  const renderer = new T.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.75));
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap;
+  renderer.toneMapping = T.ACESFilmicToneMapping; renderer.toneMappingExposure = .95;
+  host.appendChild(renderer.domElement);
+  const scene = new T.Scene();
+  const camera = new T.PerspectiveCamera(36, 1, .1, 400);
+
+  const mat = (color, o = {}) => new T.MeshStandardMaterial(Object.assign({ color, roughness: .6 }, o));
+  function mesh(g, m, cast = true) { const x = new T.Mesh(g, m); x.castShadow = cast; x.receiveShadow = true; return x; }
+  function glowTex() {
+    const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d');
+    const r = g.createRadialGradient(64, 64, 0, 64, 64, 64); r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(.3, 'rgba(255,255,255,.5)'); r.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = r; g.fillRect(0, 0, 128, 128); const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; return t;
+  }
+  const GLOW = glowTex();
+
+  /* 天空 */
+  const sky = new T.Mesh(new T.SphereGeometry(200, 32, 16), new T.ShaderMaterial({
+    side: T.BackSide, depthWrite: false,
+    vertexShader: 'varying vec3 vP; void main(){ vP = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.); }',
+    fragmentShader: 'varying vec3 vP; void main(){ float h = vP.y; vec3 top = vec3(.26,.56,.93), mid = vec3(.62,.82,.98), bot = vec3(.78,.9,.98); vec3 c = h > 0. ? mix(mid, top, pow(h, .7)) : mix(mid, bot, pow(-h, .5)); gl_FragColor = vec4(c, 1.); }'
+  }));
+  scene.add(sky);
+  const pm = new T.PMREMGenerator(renderer); const es = new T.Scene(); es.add(sky.clone());
+  scene.environment = pm.fromScene(es, .04).texture;
+
+  /* 燈光 */
+  scene.add(new T.HemisphereLight('#E6F3FF', '#7FA85A', 1.3));
+  const sun = new T.DirectionalLight('#FFF1D8', 2.8); sun.position.set(-6, 12, 8); sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -10, right: 10, top: 10, bottom: -10 }); sun.shadow.bias = -.0005; sun.shadow.radius = 5;
+  scene.add(sun);
+  const rim = new T.DirectionalLight('#BFE0FF', 1.2); rim.position.set(6, 5, -8); scene.add(rim);
+
+  /* 浮空小草島 */
+  const island = new T.Group(); scene.add(island);
+  const top = mesh(new T.CylinderGeometry(7.5, 7.2, .7, 48), mat('#7CC45A', { roughness: .95 }), false); top.position.y = -.35; island.add(top);
+  const dirt = mesh(new T.ConeGeometry(7.2, 5, 12, 3), mat('#A97B52', { roughness: 1, flatShading: true }), false); dirt.rotation.x = Math.PI; dirt.position.y = -3.2; island.add(dirt);
+  const rim2 = mesh(new T.TorusGeometry(7.35, .22, 8, 64), mat('#5FA845')); rim2.rotation.x = Math.PI / 2; rim2.position.y = 0; island.add(rim2);
+  for (let i = 0; i < 26; i++) {
+    const a = Math.random() * Math.PI * 2, r = 4.8 + Math.random() * 2.2;
+    const f = mesh(new T.IcosahedronGeometry(.13, 0), mat(['#FF6B8A', '#FFD23F', '#FFFFFF', '#9B7BFF'][i % 4]));
+    f.position.set(Math.cos(a) * r, .12, Math.sin(a) * r); island.add(f);
+  }
+  for (let i = 0; i < 160; i++) {
+    const a = Math.random() * Math.PI * 2, r = 1 + Math.random() * 6.2;
+    const g = mesh(new T.ConeGeometry(.06, .35 + Math.random() * .25, 3), mat('#5DAE45'), false);
+    g.position.set(Math.cos(a) * r, .15, Math.sin(a) * r); g.rotation.set(Math.random() * .4 - .2, 0, Math.random() * .4 - .2); island.add(g);
+  }
+  /* 三個小台座 */
+  const SPOTS = [[-3.6, 0, 1.2], [0, 0, 2.2], [3.6, 0, 1.2]];
+  const padColors = ['#FFE27A', '#FFB08A', '#9FD8FF'];
+  SPOTS.forEach((p, i) => {
+    const pad = mesh(new T.CylinderGeometry(1.35, 1.5, .28, 32), mat('#F4EEDC', { roughness: .5 })); pad.position.set(p[0], .14, p[2]); island.add(pad);
+    const ring = mesh(new T.TorusGeometry(1.36, .07, 8, 48), mat(padColors[i], { emissive: padColors[i], emissiveIntensity: .35 })); ring.rotation.x = Math.PI / 2; ring.position.set(p[0], .3, p[2]); island.add(ring);
+  });
+
+  /* 共用：可愛的眼睛與嘴巴 */
+  function eyes(parent, y, z, spread, size = .16, tilt = 0) {
+    [-1, 1].forEach(s => {
+      const e = mesh(new T.SphereGeometry(size, 16, 12), mat('#1F2A5C', { roughness: .15 })); e.scale.set(1, 1.25, .6);
+      e.position.set(s * spread, y, z); e.rotation.y = s * tilt; parent.add(e);
+      const h1 = new T.Mesh(new T.SphereGeometry(size * .32, 8, 8), new T.MeshBasicMaterial({ color: '#fff' })); h1.position.set(s * spread + size * .3, y + size * .38, z + size * .5); parent.add(h1);
+      const h2 = new T.Mesh(new T.SphereGeometry(size * .15, 8, 8), new T.MeshBasicMaterial({ color: '#fff' })); h2.position.set(s * spread - size * .25, y - size * .35, z + size * .5); parent.add(h2);
+    });
+  }
+  function smile(parent, y, z, w = .16, open = false) {
+    if (open) {
+      const m = mesh(new T.SphereGeometry(w, 16, 10, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), mat('#8A2A3A', { roughness: .5 })); m.scale.set(1, .8, .4); m.position.set(0, y, z); parent.add(m);
+      const tongue = mesh(new T.SphereGeometry(w * .55, 12, 8), mat('#FF7A8A')); tongue.scale.set(1, .5, .4); tongue.position.set(0, y - w * .5, z + .02); parent.add(tongue);
+    } else {
+      const m = mesh(new T.TorusGeometry(w, .025, 6, 16, Math.PI), mat('#1F2A5C')); m.rotation.z = Math.PI; m.position.set(0, y, z); parent.add(m);
+    }
+  }
+  function blush(parent, y, z, spread, color = '#FFA3B5') {
+    [-1, 1].forEach(s => { const b = new T.Mesh(new T.SphereGeometry(.1, 10, 8), new T.MeshBasicMaterial({ color, transparent: true, opacity: .75 })); b.scale.set(1.3, .6, .3); b.position.set(s * spread, y, z); parent.add(b); });
+  }
+
+  /* ================= 1. 雲朵棉棉（雷） ================= */
+  function makeCloud() {
+    const g = new T.Group(), body = new T.Group(); g.add(body);
+    const fluff = mat('#FFFDF6', { roughness: .95, emissive: '#FFF6E0', emissiveIntensity: .12 });
+    const puffs = [[0, .95, 0, .85], [-.62, .82, .05, .6], [.62, .82, .05, .6], [-.35, 1.45, -.05, .55], [.38, 1.42, -.05, .55], [0, 1.6, -.2, .5], [0, .8, -.5, .65], [-.75, 1.15, -.35, .42], [.75, 1.15, -.35, .42]];
+    puffs.forEach(([x, y, z, r]) => { const p = mesh(new T.SphereGeometry(r, 24, 18), fluff); p.position.set(x, y, z); body.add(p); });
+    /* 淡紫色的肚子陰影 */
+    const belly = mesh(new T.SphereGeometry(.75, 20, 14), mat('#E7E0FF', { roughness: .95 })); belly.scale.set(1.25, .55, 1); belly.position.set(0, .48, 0); body.add(belly);
+    eyes(body, 1.08, .8, .28, .15);
+    smile(body, .86, .84, .1);
+    blush(body, .92, .78, .5);
+    /* 小腳 */
+    [[-.4, .2], [.4, .2], [-.3, -.35], [.3, -.35]].forEach(([x, z]) => { const f = mesh(new T.SphereGeometry(.16, 12, 10), mat('#D9D2F0')); f.scale.y = .7; f.position.set(x, .15, z); body.add(f); });
+    /* 捲捲天線 + 閃電尖端 */
+    const pts = [new T.Vector3(0, 1.9, -.1), new T.Vector3(.12, 2.3, -.05), new T.Vector3(-.1, 2.6, .05), new T.Vector3(.08, 2.85, .05)];
+    const ant = mesh(new T.TubeGeometry(new T.CatmullRomCurve3(pts), 24, .045, 8), mat('#5C5A7A')); body.add(ant);
+    const bolt = new T.Shape(); [[0, .42], [-.18, .02], [-.02, .04], [-.12, -.36], [.2, .08], [.03, .06], [.14, .42]].forEach(([x, y], i) => i ? bolt.lineTo(x, y) : bolt.moveTo(x, y));
+    const boltG = new T.ExtrudeGeometry(bolt, { depth: .08, bevelEnabled: true, bevelSize: .025, bevelThickness: .025, bevelSegments: 2 }); boltG.center();
+    const tip = mesh(boltG, mat('#FFE14D', { emissive: '#FFC400', emissiveIntensity: 2.2, roughness: .3 }));
+    tip.position.set(.08, 3.1, .05); tip.scale.setScalar(.9); body.add(tip);
+    const halo = new T.Sprite(new T.SpriteMaterial({ map: GLOW, color: '#FFE680', transparent: true, blending: T.AdditiveBlending, depthWrite: false })); halo.scale.setScalar(1.3); tip.add(halo);
+    g.userData = { body, tip, halo, kind: 'cloud' };
+    return g;
+  }
+
+  /* ================= 2. 燈籠果果（火） ================= */
+  function makeFruit() {
+    const g = new T.Group(), body = new T.Group(); g.add(body);
+    /* 有稜紋的果實身體 */
+    const geo = new T.SphereGeometry(1, 48, 32); const p = geo.attributes.position, col = [];
+    const cTop = new T.Color('#FF6A2B'), cBot = new T.Color('#FFB347');
+    for (let i = 0; i < p.count; i++) {
+      const x = p.getX(i), y = p.getY(i), z = p.getZ(i), a = Math.atan2(z, x);
+      const k = 1 + .045 * Math.cos(a * 8) * (1 - Math.abs(y));
+      p.setXYZ(i, x * k, y * .86, z * k);
+      const c = cTop.clone().lerp(cBot, (1 - y) / 2 * .9); col.push(c.r, c.g, c.b);
+    }
+    geo.setAttribute('color', new T.Float32BufferAttribute(col, 3)); geo.computeVertexNormals();
+    const fruit = mesh(geo, new T.MeshPhysicalMaterial({ vertexColors: true, roughness: .35, clearcoat: 1, clearcoatRoughness: .2 })); fruit.position.y = 1.05; body.add(fruit);
+    eyes(body, 1.2, .82, .3, .16);
+    smile(body, .9, .86, .16, true);
+    blush(body, 1.0, .8, .56, '#FFD0A0');
+    /* 小腳 */
+    [-1, 1].forEach(s => { const f = mesh(new T.SphereGeometry(.22, 14, 10), mat('#E0552A')); f.scale.set(1, .6, 1.3); f.position.set(s * .38, .14, .15); body.add(f); });
+    /* 小手 */
+    [-1, 1].forEach(s => { const h = mesh(new T.SphereGeometry(.16, 12, 10), mat('#FF7A3D')); h.position.set(s * .95, .95, .25); body.add(h); });
+    /* 頭頂的葉子 */
+    for (let i = 0; i < 5; i++) {
+      const l = mesh(new T.SphereGeometry(.28, 12, 8), mat('#4CA84A', { roughness: .6 })); l.scale.set(1, .22, .5);
+      const a = i / 5 * Math.PI * 2; l.position.set(Math.cos(a) * .22, 1.92, Math.sin(a) * .22); l.rotation.y = -a; l.rotation.z = .35; body.add(l);
+    }
+    /* 火苗（三層發光） */
+    const flame = new T.Group(); flame.position.set(0, 2.05, 0); body.add(flame);
+    const layers = [['#FF4D1A', .36, 1.0, .9], ['#FF8A1E', .27, .78, 1.2], ['#FFD84A', .16, .52, 1.6]].map(([c, r, h, e]) => {
+      const fg = new T.SphereGeometry(r, 16, 12); fg.translate(0, r, 0);
+      const fp = fg.attributes.position; for (let i = 0; i < fp.count; i++) { const y = fp.getY(i) / (r * 2); const s = 1 - Math.pow(Math.max(0, y - .35) / .65, 1.4) * .95; fp.setX(i, fp.getX(i) * s); fp.setZ(i, fp.getZ(i) * s); fp.setY(i, fp.getY(i) * (1 + Math.max(0, y - .4) * h * .7)); }
+      fg.computeVertexNormals();
+      const m = new T.Mesh(fg, new T.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: e, transparent: true, opacity: .92, roughness: .4 }));
+      flame.add(m); return m;
+    });
+    const fl = new T.PointLight('#FF9A40', 6, 6); fl.position.y = .6; flame.add(fl);
+    const halo = new T.Sprite(new T.SpriteMaterial({ map: GLOW, color: '#FFB050', transparent: true, blending: T.AdditiveBlending, depthWrite: false })); halo.scale.setScalar(2); halo.position.y = .5; flame.add(halo);
+    g.userData = { body, flame, layers, light: fl, kind: 'fruit' };
+    return g;
+  }
+
+  /* ================= 3. 泡泡蝸（水） ================= */
+  function makeSnail() {
+    const g = new T.Group(), body = new T.Group(); g.add(body);
+    const skin = mat('#4FB6EE', { roughness: .3 }), belly = mat('#CDEFFF', { roughness: .4 });
+    /* 身體：前面抬起的頭 + 後面扁扁的腳 */
+    const foot = mesh(new T.CapsuleGeometry(.45, 1.5, 8, 20), skin); foot.rotation.x = Math.PI / 2; foot.scale.set(1.05, 1, .55); foot.position.set(0, .3, .05); body.add(foot);
+    const underside = mesh(new T.CapsuleGeometry(.44, 1.45, 6, 16), belly); underside.rotation.x = Math.PI / 2; underside.scale.set(1.08, 1, .3); underside.position.set(0, .14, .05); body.add(underside);
+    const neck = mesh(new T.CapsuleGeometry(.42, .5, 8, 16), skin); neck.position.set(0, .8, 1.0); neck.rotation.x = .25; body.add(neck);
+    const head = mesh(new T.SphereGeometry(.62, 28, 20), skin); head.position.set(0, 1.35, 1.12); body.add(head);
+    eyes(head, .05, .53, .24, .14);
+    smile(head, -.2, .58, .1);
+    blush(head, -.08, .52, .42, '#FFB6D0');
+    /* 眼柄觸角 */
+    const stalks = [-1, 1].map(s => {
+      const st = new T.Group(); st.position.set(s * .25, .5, -.05); st.rotation.z = -s * .35; head.add(st);
+      const stem = mesh(new T.CylinderGeometry(.05, .07, .55, 8), skin); stem.position.y = .27; st.add(stem);
+      const ball = mesh(new T.SphereGeometry(.12, 12, 10), mat('#FFFFFF', { emissive: '#9BE7FF', emissiveIntensity: 1.4 })); ball.position.y = .6; st.add(ball);
+      return st;
+    });
+    /* 泡泡殼：透明外殼 + 裡面的漩渦海水 */
+    const shell = new T.Group(); shell.position.set(0, 1.15, -.35); body.add(shell);
+    const bubble = new T.Mesh(new T.SphereGeometry(.95, 40, 28), new T.MeshPhysicalMaterial({
+      color: '#A8E4FF', roughness: .08, metalness: 0, transmission: .55, thickness: .6, ior: 1.3,
+      iridescence: 1, iridescenceIOR: 1.4, transparent: true, opacity: .62, clearcoat: 1, envMapIntensity: 1.1
+    }));
+    bubble.castShadow = false; shell.add(bubble);
+    const swirlPts = []; for (let i = 0; i <= 80; i++) { const k = i / 80, a = k * Math.PI * 5; const r = .7 * (1 - k * .85); swirlPts.push(new T.Vector3(Math.cos(a) * r, Math.sin(a) * r, (k - .5) * .25)); }
+    const swirl = new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(swirlPts), 160, .09, 10), mat('#1E7FE0', { emissive: '#1560C8', emissiveIntensity: 1.1, roughness: .2 }));
+    swirl.rotation.y = Math.PI / 2; shell.add(swirl);
+    const core = new T.Mesh(new T.SphereGeometry(.16, 16, 12), mat('#BFF3FF', { emissive: '#9BE7FF', emissiveIntensity: 2.2 })); shell.add(core);
+    g.userData = { body, shell, swirl, stalks, head, kind: 'snail' };
+    return g;
+  }
+
+  /* ================= 訓練家（比例參考） ================= */
+  function makeTrainer() {
+    const g = new T.Group();
+    const legs = [-1, 1].map(s => { const l = mesh(new T.CapsuleGeometry(.14, .35, 4, 8), mat('#34407A')); l.position.set(s * .17, .32, 0); g.add(l); return l; });
+    const torso = mesh(new T.CapsuleGeometry(.36, .35, 6, 12), mat('#E8553D')); torso.position.y = .95; g.add(torso);
+    [-1, 1].forEach(s => { const a = mesh(new T.CapsuleGeometry(.1, .35, 4, 8), mat('#E8553D')); a.position.set(s * .45, 1, 0); a.rotation.z = s * .25; g.add(a); });
+    const head = mesh(new T.SphereGeometry(.62, 24, 18), mat('#FFD9B8')); head.position.y = 1.85; g.add(head);
+    const hair = mesh(new T.SphereGeometry(.64, 24, 18, 0, Math.PI * 2, 0, Math.PI * .55), mat('#5A3A26')); hair.position.y = 1.9; hair.rotation.x = -.25; g.add(hair);
+    eyes(g, 1.85, .55, .22, .09);
+    const cap = mesh(new T.SphereGeometry(.66, 24, 12, 0, Math.PI * 2, 0, Math.PI * .5), mat('#E8553D')); cap.position.y = 2.02; g.add(cap);
+    const brim = mesh(new T.CylinderGeometry(.42, .42, .06, 20, 1, false, -Math.PI / 2, Math.PI), mat('#E8553D')); brim.position.set(0, 2.05, .52); g.add(brim);
+    const bp = mesh(new T.BoxGeometry(.55, .6, .3), mat('#F2B63D')); bp.position.set(0, 1, -.42); g.add(bp);
+    g.scale.setScalar(1.35);
+    return g;
+  }
+
+  const CREATURES = [
+    { make: makeCloud, name: '雲朵棉棉', type: '雷', color: '#F2B600', sfx: 'attack_zap', spot: 0, scale: 1,
+      info: { 個性: '愛睡午覺、慢吞吞，天線一亮就超有精神', 特徵: '身體像棉花糖一樣軟綿綿，會輕輕飄在空中；捲捲天線的尖端會冒出小閃電', 招式: '「棉花電光」：放出一圈軟軟的電光' } },
+    { make: makeFruit, name: '燈籠果果', type: '火', color: '#FF6A2B', sfx: 'attack_fire', spot: 1, scale: 1,
+      info: { 個性: '活潑好動、停不下來，最喜歡跳來跳去', 特徵: '圓滾滾的果實身體；頭上的火苗會跟著心情變大變小，開心時會變得金黃', 招式: '「果香火花」：蹦一下噴出香香的火花' } },
+    { make: makeSnail, name: '泡泡蝸', type: '水', color: '#2E9BE8', sfx: 'attack_water', spot: 2, scale: 1,
+      info: { 個性: '溫和又有耐心，是大家的安撫者', 特徵: '背著透明的泡泡殼，殼裡有一小片旋轉的海水；走過的地方會冒出泡泡', 招式: '「泡泡漩渦」：吹出一串會旋轉的泡泡' } }
+  ];
+  CREATURES.forEach(c => {
+    const g = c.make(); const [x, , z] = SPOTS[c.spot];
+    g.position.set(x, .28, z); g.rotation.y = -x * .12; g.scale.setScalar(c.scale); scene.add(g);
+    g.traverse(o => { if (o.isMesh) o.userData.owner = c; });
+    c.g = g; c.act = 0;
+  });
+  const trainer = makeTrainer(); trainer.position.set(-1.9, 0, -2.4); trainer.rotation.y = .25; scene.add(trainer);
+
+  /* ================= 特效粒子 ================= */
+  const parts = [];
+  const partGeo = new T.SphereGeometry(1, 10, 8);
+  function spawn(pos, kind, n = 1) {
+    for (let i = 0; i < n; i++) {
+      let m, v, life, grow = 0;
+      if (kind === 'spark') {
+        m = new T.Sprite(new T.SpriteMaterial({ map: GLOW, color: new T.Color(3, 2.6, .8), transparent: true, blending: T.AdditiveBlending, depthWrite: false }));
+        m.scale.setScalar(.25 + Math.random() * .25); v = new T.Vector3((Math.random() - .5) * 3, Math.random() * 2.5, (Math.random() - .5) * 3); life = .35 + Math.random() * .3;
+      } else if (kind === 'ember') {
+        m = new T.Sprite(new T.SpriteMaterial({ map: GLOW, color: new T.Color(3, 1.4, .4), transparent: true, blending: T.AdditiveBlending, depthWrite: false }));
+        m.scale.setScalar(.18 + Math.random() * .2); v = new T.Vector3((Math.random() - .5) * .8, 1.2 + Math.random() * 1.6, (Math.random() - .5) * .8); life = .6 + Math.random() * .6;
+      } else {
+        m = new T.Mesh(partGeo, new T.MeshPhysicalMaterial({ color: '#E6F8FF', roughness: 0, transmission: .9, thickness: .1, iridescence: 1, transparent: true, opacity: .7 }));
+        m.scale.setScalar(.08 + Math.random() * .12); v = new T.Vector3((Math.random() - .5) * .5, .7 + Math.random() * .7, (Math.random() - .5) * .5); life = 1.6 + Math.random(); grow = .05;
+      }
+      m.position.copy(pos); scene.add(m);
+      parts.push({ m, v, life, max: life, grow, kind });
+    }
+  }
+
+  /* ================= 資訊卡 ================= */
+  const cardsBox = document.getElementById('cards');
+  CREATURES.forEach((c, i) => {
+    const el = document.createElement('button');
+    el.className = 'pcard-info'; el.style.setProperty('--c', c.color);
+    el.innerHTML = `<h2>${c.name}<span class="type">${c.type}屬性</span></h2><dl>${Object.entries(c.info).map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>`;
+    el.onclick = () => focus(i, true);
+    cardsBox.appendChild(el); c.card = el;
+  });
+
+  /* ================= 鏡頭 ================= */
+  const cam = { az: 0, pol: 1.3, dist: 15, target: new T.Vector3(0, .5, 1.2) };
+  const goal = { az: 0, pol: 1.3, dist: 15, target: cam.target.clone() };
+  let focused = -1;
+  function focus(i, act) {
+    if (focused === i && !act) return;
+    focused = i;
+    CREATURES.forEach((c, k) => c.card.classList.toggle('on', k === i));
+    if (i < 0) { goal.dist = 15; goal.target.set(0, .5, 1.2); goal.az = 0; return; }
+    const c = CREATURES[i];
+    goal.target.set(c.g.position.x, .5, c.g.position.z + .4); goal.dist = 8.5; goal.az = c.g.position.x * .08;
+    if (act) { c.act = 1.4; PTCGAudio.unlock(); PTCGAudio.play(c.sfx); c.card.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); }
+  }
+  const el = renderer.domElement, ptrs = new Map(); let drag = null, pinch = null;
+  el.addEventListener('pointerdown', e => { el.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, [e.clientX, e.clientY]); drag = { x: e.clientX, y: e.clientY, moved: 0 }; document.getElementById('hint').style.opacity = 0; });
+  el.addEventListener('pointermove', e => {
+    if (!ptrs.has(e.pointerId)) return; ptrs.set(e.pointerId, [e.clientX, e.clientY]);
+    if (ptrs.size === 2) { const [a, b] = [...ptrs.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]); if (pinch) goal.dist = Math.min(22, Math.max(5, goal.dist * pinch / d)); pinch = d; return; }
+    if (!drag) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.moved += Math.abs(dx) + Math.abs(dy);
+    goal.az -= dx * .006; goal.pol = Math.min(1.45, Math.max(.75, goal.pol - dy * .004)); drag.x = e.clientX; drag.y = e.clientY;
+  });
+  const up = e => {
+    ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch = null;
+    if (drag && drag.moved < 6) {
+      const r = new T.Raycaster(); r.setFromCamera(new T.Vector2(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1), camera);
+      const hit = r.intersectObjects(CREATURES.map(c => c.g), true)[0];
+      if (hit) focus(CREATURES.indexOf(hit.object.userData.owner), true); else focus(-1);
+    }
+    if (!ptrs.size) drag = null;
+  };
+  el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+  el.addEventListener('wheel', e => { e.preventDefault(); goal.dist = Math.min(22, Math.max(5, goal.dist * (1 + Math.sign(e.deltaY) * .08))); }, { passive: false });
+
+  /* ================= 後製 ================= */
+  const composer = new T.EffectComposer(renderer);
+  composer.addPass(new T.RenderPass(scene, camera));
+  const bloom = new T.UnrealBloomPass(new T.Vector2(512, 512), .38, .4, 1.0); composer.addPass(bloom);
+  composer.addPass(new T.OutputPass());
+  function resize() {
+    renderer.setSize(innerWidth, innerHeight); composer.setSize(innerWidth, innerHeight);
+    camera.aspect = innerWidth / innerHeight; camera.fov = innerWidth < 700 ? 52 : 36; camera.updateProjectionMatrix();
+  }
+  addEventListener('resize', resize); resize();
+
+  /* ================= 動畫 ================= */
+  const clock = new T.Clock(), tmp = new T.Vector3();
+  let frames = 0, sparkT = 0, emberT = 0, bubbleT = 0;
+  renderer.setAnimationLoop(() => {
+    const dt = Math.min(.05, clock.getDelta()), t = clock.elapsedTime;
+    cam.az += (goal.az + (focused < 0 ? Math.sin(t * .2) * .15 : 0) - cam.az) * .06; cam.pol += (goal.pol - cam.pol) * .06; cam.dist += (goal.dist - cam.dist) * .06; cam.target.lerp(goal.target, .06);
+    camera.position.set(cam.target.x + cam.dist * Math.sin(cam.pol) * Math.sin(cam.az), cam.target.y + cam.dist * Math.cos(cam.pol), cam.target.z + cam.dist * Math.sin(cam.pol) * Math.cos(cam.az));
+    camera.lookAt(cam.target);
+
+    CREATURES.forEach(c => {
+      const u = c.g.userData, b = u.body; c.act = Math.max(0, c.act - dt); const A = c.act > 0 ? c.act / 1.4 : 0;
+      if (u.kind === 'cloud') {
+        b.position.y = .35 + Math.sin(t * 1.6) * .18 + Math.sin(A * Math.PI) * 1.4;
+        b.rotation.z = Math.sin(t * 1.1) * .06; b.rotation.y = A * Math.PI * 4;
+        const s = 1 + Math.sin(t * 3) * .02; b.scale.set(1 + Math.sin(t * 1.6) * .03, s, 1);
+        const flick = .6 + Math.random() * (A > 0 ? 3 : .8); u.tip.material.emissiveIntensity = 1.4 + flick; u.halo.scale.setScalar(1 + flick * .4);
+        sparkT -= dt; if (sparkT < 0) { sparkT = A > 0 ? .02 : .25; u.tip.getWorldPosition(tmp); spawn(tmp, 'spark', A > 0 ? 4 : 1); }
+      } else if (u.kind === 'fruit') {
+        const hop = Math.abs(Math.sin(t * 3.2)); b.position.y = hop * .35 + Math.sin(A * Math.PI) * 1.3;
+        const sq = 1 - (1 - hop) * .12; b.scale.set(1 / Math.sqrt(sq), sq, 1 / Math.sqrt(sq));
+        b.rotation.y = Math.sin(t * .9) * .3 + A * Math.PI * 2;
+        const big = 1 + A * .8;
+        u.layers.forEach((l, i) => { l.scale.set(big * (1 + Math.sin(t * 13 + i * 2) * .1), big * (1 + Math.sin(t * 9 + i) * .18), big * (1 + Math.cos(t * 11 + i) * .1)); l.rotation.y = t * (2 + i); });
+        u.light.intensity = 5 + Math.sin(t * 17) * 1.5 + A * 14;
+        emberT -= dt; if (emberT < 0) { emberT = A > 0 ? .02 : .18; u.flame.getWorldPosition(tmp); tmp.y += .5; spawn(tmp, 'ember', A > 0 ? 3 : 1); }
+      } else {
+        const glide = Math.sin(t * .8); b.position.z = glide * .12; b.position.y = 0;
+        b.rotation.y = Math.sin(t * .4) * .25 + A * Math.PI * 2;
+        u.shell.rotation.z = Math.sin(t * 1.2) * .06; u.swirl.rotation.z = t * (1.2 + A * 8);
+        u.head.position.y = 1.35 + Math.sin(t * 2) * .05 + Math.sin(A * Math.PI) * .3;
+        u.stalks.forEach((s, i) => { s.rotation.x = Math.sin(t * 2.5 + i) * .18; });
+        bubbleT -= dt; if (bubbleT < 0) { bubbleT = A > 0 ? .04 : .5; u.shell.getWorldPosition(tmp); tmp.y += .7; tmp.x += (Math.random() - .5) * .6; spawn(tmp, 'bubble', A > 0 ? 2 : 1); }
+      }
+    });
+    /* 訓練家：輕輕呼吸、偶爾揮手 */
+    trainer.position.y = Math.sin(t * 2.4) * .03;
+    trainer.rotation.y = .25 + Math.sin(t * .5) * .12;
+
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const p = parts[i]; p.life -= dt;
+      if (p.life <= 0) { scene.remove(p.m); p.m.material.dispose(); parts.splice(i, 1); continue; }
+      p.m.position.addScaledVector(p.v, dt);
+      if (p.kind === 'bubble') { p.m.position.x += Math.sin(t * 3 + i) * .004; p.m.scale.multiplyScalar(1 + p.grow * dt); }
+      else p.v.multiplyScalar(.95);
+      p.m.material.opacity = Math.min(1, p.life / p.max * 1.5) * (p.kind === 'bubble' ? .7 : 1);
+    }
+    composer.render(dt);
+    if (++frames === 3) { const L = document.getElementById('loading'); L.style.opacity = 0; setTimeout(() => L.remove(), 800); }
+  });
+})();
+</script>
+</body>
+</html>

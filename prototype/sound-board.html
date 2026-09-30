@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>音樂與音效試聽｜寶可夢卡牌訓練營</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>">
+<link rel="stylesheet" href="../assets/css/style.css">
+<style>
+  .board{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
+  .sfx{
+    display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;
+    padding:12px 14px;font-size:18px;line-height:1.35;min-height:84px
+  }
+  .sfx small{font-size:13px;color:#5A6080}
+  .sfx.playing{background:var(--sun);animation:bump .5s var(--pop)}
+  .bgm-card{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .bgm-card .big{font-size:22px;padding:14px 24px}
+  .vu{display:flex;gap:4px;align-items:flex-end;height:48px;flex:1;min-width:160px}
+  .vu i{flex:1;background:linear-gradient(180deg,#FF5E6C,#FFCE3A 45%,#5CC75A);border:2px solid var(--ink);border-radius:6px 6px 2px 2px;height:8%;transition:height .08s}
+  .vol{display:flex;flex-direction:column;gap:6px;font-size:16px;min-width:200px}
+  .vol input{width:100%;accent-color:var(--berry)}
+  .note{font-size:15px;color:#5A6080;margin:10px 0 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <a class="btn" href="../index.html">🗺 回地圖</a>
+    <span id="sound"></span>
+  </div>
+  <header class="unit-head">
+    <span class="tag" style="background:var(--berry)">試聽板</span>
+    <h1>音樂與音效</h1>
+    <p>全部是用程式合成的原創音樂與音效。點按鈕就能聽，網站之後會在對應的時刻自動播放。</p>
+  </header>
+
+  <section class="lesson">
+    <h2><span class="no">♪</span>背景音樂：新手草原</h2>
+    <p>140 BPM、C 大調，輕快的跳動貝斯加上明亮的旋律，約 55 秒一輪，可以無縫循環。</p>
+    <div class="bgm-card">
+      <button class="btn sun big" id="bgmBtn">▶ 播放音樂</button>
+      <div class="vu" id="vu" aria-hidden="true"></div>
+      <div class="vol">
+        <label>音樂音量 <input type="range" id="volM" min="0" max="1" step=".05"></label>
+        <label>音效音量 <input type="range" id="volS" min="0" max="1" step=".05"></label>
+      </div>
+    </div>
+    <p class="note">小提醒：音樂可以一邊播放，一邊點下面的音效，聽聽看混在一起的感覺。</p>
+  </section>
+
+  <section class="lesson">
+    <h2><span class="no">1</span>卡牌動作</h2>
+    <div class="board" data-group="card"></div>
+  </section>
+  <section class="lesson">
+    <h2><span class="no">2</span>攻擊招式</h2>
+    <div class="board" data-group="attack"></div>
+  </section>
+  <section class="lesson">
+    <h2><span class="no">3</span>介面與獎勵</h2>
+    <div class="board" data-group="ui"></div>
+  </section>
+</div>
+
+<script src="../assets/js/audio.js"></script>
+<script>
+(() => {
+  PTCGAudio.init('../assets/audio/');
+  PTCGAudio.button(document.getElementById('sound'));
+  const LIST = [
+    ['card', 'card_draw', '🃏 抽牌', '從牌庫抽一張卡'],
+    ['card', 'card_flip', '🔄 翻牌', '把卡片翻到正面'],
+    ['card', 'card_place', '✨ 出牌', '把寶可夢放到場上'],
+    ['card', 'energy_attach', '⚡ 附能量', '能量充進寶可夢'],
+    ['attack', 'attack_hit', '💥 一般攻擊', '咻～碰！'],
+    ['attack', 'attack_zap', '⚡ 雷屬性招式', '劈哩啪啦的電流'],
+    ['attack', 'attack_fire', '🔥 火屬性招式', '呼嘯的火焰'],
+    ['attack', 'attack_water', '💧 水屬性招式', '泡泡與水花'],
+    ['attack', 'attack_super', '🌟 必殺大招', '集氣後大爆發'],
+    ['attack', 'damage', '😣 受到傷害', 'HP 被扣掉'],
+    ['attack', 'knockout', '💫 昏厥', '寶可夢退場'],
+    ['ui', 'correct', '⭕ 答對了', '測驗答對'],
+    ['ui', 'wrong', '❌ 差一點', '溫和的提示，不會嚇到小朋友'],
+    ['ui', 'star', '⭐ 拿到星星', '得到獎勵'],
+    ['ui', 'level_clear', '🏆 過關', '過關號角'],
+    ['ui', 'enter_gym', '🏠 進入道館', '鏡頭飛進關卡'],
+    ['ui', 'ui_click', '👆 按鈕', '一般按鈕']
+  ];
+  LIST.forEach(([g, id, label, desc]) => {
+    const b = document.createElement('button');
+    b.className = 'btn sfx';
+    b.innerHTML = `<span>${label}</span><small>${desc}</small>`;
+    b.onclick = () => { PTCGAudio.unlock(); PTCGAudio.play(id); b.classList.remove('playing'); void b.offsetWidth; b.classList.add('playing'); setTimeout(() => b.classList.remove('playing'), 700); };
+    document.querySelector(`.board[data-group="${g}"]`).appendChild(b);
+  });
+  PTCGAudio.preload(LIST.map(x => x[1]).concat('bgm_grassland'));
+
+  /* 背景音樂開關 */
+  let on = false;
+  const btn = document.getElementById('bgmBtn');
+  btn.onclick = () => {
+    PTCGAudio.unlock();
+    on = !on;
+    if (on) { if (PTCGAudio.muted) PTCGAudio.setMuted(false); PTCGAudio.music('bgm_grassland'); } else { PTCGAudio.music(null); PTCGAudio.stopMusic(); }
+    btn.textContent = on ? '⏸ 暫停音樂' : '▶ 播放音樂';
+  };
+  const vm = document.getElementById('volM'), vs = document.getElementById('volS');
+  vm.value = PTCGAudio.volumes.music; vs.value = PTCGAudio.volumes.sfx;
+  vm.oninput = () => PTCGAudio.setVolume('music', +vm.value);
+  vs.oninput = () => PTCGAudio.setVolume('sfx', +vs.value);
+
+  /* 跟著 140 BPM 跳動的音量條（裝飾） */
+  const vu = document.getElementById('vu');
+  vu.innerHTML = '<i></i>'.repeat(16);
+  const bars = [...vu.children], beat = 60 / 140;
+  (function loop(t) {
+    bars.forEach((b, i) => {
+      const k = on && !PTCGAudio.muted ? (Math.abs(Math.sin(t / 1000 / beat * Math.PI + i * .7)) * .7 + Math.random() * .3) : .08;
+      b.style.height = (8 + k * 92) + '%';
+    });
+    requestAnimationFrame(loop);
+  })(0);
+})();
+</script>
+</body>
+</html>
