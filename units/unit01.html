@@ -175,9 +175,9 @@
   new Player(document.getElementById('L2'), {
     reset() { s2.innerHTML = card(PIKACHU); },
     steps: L2parts.map(([part, label, say]) => ({
-      say, dur: 3600,
+      sfx: 'card_draw', say, dur: 3600,
       run() { pointAt(s2, part, '👉 ' + label); }
-    })).concat([{ say: '你已經會看寶可夢卡了！下次拿到卡片，先找這幾個地方。', dur: 3400,
+    })).concat([{ sfx: 'star', say: '你已經會看寶可夢卡了！下次拿到卡片，先找這幾個地方。', dur: 3400,
       run() { clearPoint(s2); const c = s2.querySelector('.pcard'); restart(c, 'jump'); sparkle(c, 12); } }])
   });
 
@@ -191,18 +191,18 @@
         <div><div id="c3">${card(PIKACHU)}</div><div style="text-align:center;font-size:15px;margin-top:8px">已附上的能量</div><div class="tray" id="tray" aria-label="已附上的能量"></div></div>`;
     },
     steps: [
-      { say: '「電擊」需要 1 個雷能量。', dur: 2800, run() { pointAt(s3, 'cost0', '需要 1 個雷'); } },
+      { sfx: 'card_draw', say: '「電擊」需要 1 個雷能量。', dur: 2800, run() { pointAt(s3, 'cost0', '需要 1 個雷'); } },
       { sfx: 'energy_attach', say: '把雷能量附到皮卡丘身上！', dur: 2800,
         run() { clearPoint(s3); fly(s3.querySelector('#pool .t-lightning'), s3.querySelector('#tray')); } },
       { sfx: 'attack_zap', say: '能量夠了，可以使出「電擊」！', dur: 3000,
         run() { pointAt(s3, 'atk0', '可以用了！'); sparkle(s3.querySelector('[data-part="atk0"]'), 10, ['⚡'], 'zap'); } },
-      { say: '「電球」還要多 1 個 ★。★ 是「無色」，任何能量都可以代替它！', dur: 4200,
+      { sfx: 'card_draw', say: '「電球」還要多 1 個 ★。★ 是「無色」，任何能量都可以代替它！', dur: 4200,
         run() { pointAt(s3, 'cost1', '★ = 任何能量'); } },
       { sfx: 'energy_attach', say: '下一回合，再附 1 個水能量上去。', dur: 3000,
         run() { clearPoint(s3); fly(s3.querySelector('#pool .t-water'), s3.querySelector('#tray')); } },
       { sfx: 'attack_super', say: '雷 + 水，剛好符合「雷 + ★」，可以使出「電球」了！', dur: 3600,
         run() { pointAt(s3, 'atk1', '50 點傷害！'); sparkle(s3.querySelector('[data-part="atk1"]'), 14, ['⚡', '✨'], 'zap'); } },
-      { say: '重要規則：每一回合，只能從手牌附 1 張能量喔！', dur: 3600,
+      { sfx: 'star', say: '重要規則：每一回合，只能從手牌附 1 張能量喔！', dur: 3600,
         run() { clearPoint(s3); restart(s3.querySelector('#tray'), 'jump'); } }
     ]
   });
@@ -229,7 +229,7 @@
         restart(c, 'pop-in');
         this.wait(() => { c.querySelector('[data-part="rule"]').classList.add('hl'); sparkle(c, 8); }, 500);
       }
-    })).concat([{ say: '四兄弟都認識了！最常考的是：支援者一回合只能用 1 張。', dur: 3800,
+    })).concat([{ sfx: 'star', say: '四兄弟都認識了！最常考的是：支援者一回合只能用 1 張。', dur: 3800,
       run() { [...s4.children].forEach((c, i) => { c.classList.remove('dim', 'pop-in'); this.wait(() => restart(c, 'jump'), i * 140); }); } }])
   });
 

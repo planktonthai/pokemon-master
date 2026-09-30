@@ -25,7 +25,33 @@ const PTCG = (() => {
   function getStars(id) { return load()[id] || 0; }
   function setStars(id, n) { const p = load(); if (n > (p[id] || 0)) { p[id] = n; save(p); } }
   function totalStars() { return Object.values(load()).reduce((a, b) => a + b, 0); }
-  function isUnlocked(i) { return i === 0 || getStars(UNITS[i - 1].id) > 0; }
+  const CHEAT_KEY = 'ptcg-camp-unlock-all';
+  const cheatOn = () => { try { return localStorage.getItem(CHEAT_KEY) === '1'; } catch (e) { return false; } };
+  function isUnlocked(i) { return cheatOn() || i === 0 || getStars(UNITS[i - 1].id) > 0; }
+  /* 密技按鈕：2 秒內連點 3 次，解鎖（或恢復）全部關卡 */
+  function cheatButton() {
+    const b = document.createElement('button');
+    b.className = 'cheat-btn'; b.setAttribute('aria-label', '密技按鈕'); b.title = '？';
+    if (cheatOn()) b.classList.add('on');
+    let n = 0, tm;
+    b.onclick = () => {
+      n++; clearTimeout(tm); tm = setTimeout(() => { n = 0; }, 2000);
+      restart(b, 'bump'); sfx('ui_click', { rate: 1 + n * .25 });
+      if (n < 3) return;
+      n = 0;
+      const on = !cheatOn();
+      try { on ? localStorage.setItem(CHEAT_KEY, '1') : localStorage.removeItem(CHEAT_KEY); } catch (e) { /* 無法儲存時略過 */ }
+      sfx(on ? 'level_clear' : 'knockout');
+      let t = document.getElementById('toast');
+      if (!t) { t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role', 'status'); document.body.appendChild(t); }
+      t.textContent = on ? '🔓 密技啟動！全部關卡已解鎖' : '🔒 已恢復正常模式';
+      t.classList.add('show');
+      if (on) confetti(80);
+      setTimeout(() => location.reload(), 1600);
+    };
+    document.body.appendChild(b);
+    return b;
+  }
 
   /* ---------- 屬性 ---------- */
   const TYPES = {
@@ -317,7 +343,7 @@ const PTCG = (() => {
     }
     runStep(k) {
       const s = this.steps[k];
-      if (s.sfx) sfx(s.sfx);
+      sfx(s.sfx || 'ui_click', s.sfx ? undefined : { vol: .55 });
       if (s.run) s.run.call(this);
       if (s.say) this.say(s.say);
     }
@@ -472,5 +498,5 @@ const PTCG = (() => {
     document.addEventListener('click', e => { const b = e.target.closest('.btn,.node,.gym-tag'); if (b && !b.classList.contains('sound-btn') && !b.closest('.pg-zone,.opt,.og-step,.yn-btns,.dots')) PTCGAudio.play('ui_click', { vol: .6 }); }, true);
   }
 
-  return { PARTNERS, avatar, mini, placeGame, orderGame, yesNoGame, sfx: (n, o) => sfx(n, o), get fast() { return FAST; }, twinkles, UNITS, AVAILABLE, getStars, setStars, totalStars, isUnlocked, energy, card, sparkle, confetti, restart, clouds: clouds2, starPill, Player, quiz };
+  return { cheatButton, PARTNERS, avatar, mini, placeGame, orderGame, yesNoGame, sfx: (n, o) => sfx(n, o), get fast() { return FAST; }, twinkles, UNITS, AVAILABLE, getStars, setStars, totalStars, isUnlocked, energy, card, sparkle, confetti, restart, clouds: clouds2, starPill, Player, quiz };
 })();

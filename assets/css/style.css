@@ -715,3 +715,9 @@ a{color:inherit}
 .mat.opp{transform:scale(.55);transform-origin:50% 0;margin:0 auto -128px;opacity:.85}
 .mat.opp .lbl,.mat.opp .mini b,.mat.opp .mini small{transform:none}
 .mat.opp::after{content:"對手的場地";position:absolute;right:-4px;top:-26px;background:var(--berry);color:#fff;border:3px solid var(--ink);border-radius:12px;padding:0 10px;font-size:22px}
+
+/* 密技按鈕 */
+.cheat-btn{position:fixed;right:10px;bottom:10px;z-index:40;width:26px;height:26px;padding:0;border-radius:50%;cursor:pointer;
+  background:radial-gradient(circle at 35% 30%,#FFB0A8,#E8453C 60%,#B02A22);border:3px solid var(--ink);box-shadow:0 3px 0 var(--ink)}
+.cheat-btn.on{box-shadow:0 3px 0 var(--ink),0 0 12px 4px rgba(255,206,58,.9)}
+.cheat-btn.bump{animation:bump .35s var(--pop)}

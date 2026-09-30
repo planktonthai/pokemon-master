@@ -23,7 +23,7 @@
     background:rgba(31,42,92,.82);color:#fff;border-radius:14px;padding:6px 16px;font-size:15px;white-space:nowrap;
     transition:opacity .6s
   }
-  .quality{position:fixed;right:14px;bottom:14px;z-index:11;font-size:14px;padding:6px 12px}
+  .quality{position:fixed;right:46px;bottom:12px;z-index:11;font-size:14px;padding:6px 12px}
   .zone-nav{position:fixed;left:14px;bottom:14px;z-index:11;display:flex;gap:8px}
   .zone-nav .btn{font-size:15px;padding:6px 12px}
   .zone-pill.canyon{background:linear-gradient(180deg,#FFD9A8,#F3A04C)} .zone-pill.volcano{background:linear-gradient(180deg,#FFB8A8,#E8604C);color:#fff;text-shadow:0 2px 0 var(--ink)}
@@ -105,6 +105,7 @@
   if (!document.createElement('canvas').getContext('webgl2') && !document.createElement('canvas').getContext('webgl')) { location.replace('map.html'); return; }
   const T = THREE;
   PTCG.starPill(document.querySelector('.star-pill'));
+  PTCG.cheatButton();
 
   /* ================= 基本設定 ================= */
   const host = document.getElementById('world');

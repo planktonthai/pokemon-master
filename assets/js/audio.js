@@ -14,7 +14,8 @@ const PTCGAudio = (() => {
   const loading = {};
   let ctx = null, master, musicGain, sfxGain, unlocked = false;
   let current = null, wantMusic = null, fallbackEl = null;
-  const set = Object.assign({ muted: false, music: .55, sfx: .9 }, (() => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } })());
+  const set = Object.assign({ muted: false, music: .8, sfx: .9 }, (() => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } })());
+  if (!set.v2) { set.music = .8; set.v2 = true; }
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(set)); } catch (e) { /* 無法儲存時略過 */ } };
   const listeners = [];
 
