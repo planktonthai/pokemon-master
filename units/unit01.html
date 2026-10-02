@@ -3,9 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- seo -->
+<meta name="description" content="寶可夢卡牌遊戲只有三種卡。看完動畫、答對小測驗，就能拿到星星喔！">
+<meta name="theme-color" content="#5BA8F5">
+<link rel="icon" type="image/svg+xml" href="../assets/img/icon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/img/icon-32.png">
+<link rel="apple-touch-icon" href="../assets/img/icon-180.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="zh_TW">
+<meta property="og:site_name" content="寶可夢卡牌訓練營">
+<meta property="og:title" content="第 1 關：認識卡牌｜寶可夢卡牌訓練營">
+<meta property="og:description" content="寶可夢卡牌遊戲只有三種卡。看完動畫、答對小測驗，就能拿到星星喔！">
+<meta property="og:image" content="https://planktonthai.github.io/pokemon-master/assets/img/og.png">
+<meta property="og:url" content="https://planktonthai.github.io/pokemon-master/units/unit01.html">
+<link rel="canonical" href="https://planktonthai.github.io/pokemon-master/units/unit01.html">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@500;900&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@500;900&display=swap"></noscript>
+<!-- /seo -->
 <title>第 1 關：認識卡牌｜寶可夢卡牌訓練營</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🃏</text></svg>">
-<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/style.min.css">
 <style>
   .tray{display:flex;gap:6px;justify-content:center;min-height:40px;margin-top:10px}
   .pool{display:flex;flex-direction:column;gap:14px}
@@ -72,8 +93,6 @@
   </section>
 </div>
 
-<script src="../assets/vendor/three.min.js"></script>
-<script src="../assets/js/fx3d.js"></script>
 <script src="../assets/js/audio.js"></script>
 <script src="../assets/js/common.js"></script>
 <script>
@@ -188,7 +207,7 @@
     reset() {
       s3.innerHTML = `
         <div style="text-align:center"><div style="font-size:15px;margin-bottom:6px">手牌裡的能量</div><div class="pool" id="pool" style="align-items:center">${big('雷')}${big('火')}${big('水')}</div></div>
-        <div><div id="c3">${card(PIKACHU)}</div><div style="text-align:center;font-size:15px;margin-top:8px">已附上的能量</div><div class="tray" id="tray" aria-label="已附上的能量"></div></div>`;
+        <div><div id="c3">${card(PIKACHU)}</div><div style="text-align:center;font-size:15px;margin-top:8px">已附上的能量</div><div class="tray" id="tray" role="group" aria-label="已附上的能量"></div></div>`;
     },
     steps: [
       { sfx: 'card_draw', say: '「電擊」需要 1 個雷能量。', dur: 2800, run() { pointAt(s3, 'cost0', '需要 1 個雷'); } },

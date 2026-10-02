@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- seo -->
+<meta name="description" content="學會正式牌組的規則和比例，還有一副可以直接上場的範例牌組！">
+<meta name="theme-color" content="#5BA8F5">
+<link rel="icon" type="image/svg+xml" href="../assets/img/icon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/img/icon-32.png">
+<link rel="apple-touch-icon" href="../assets/img/icon-180.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="zh_TW">
+<meta property="og:site_name" content="寶可夢卡牌訓練營">
+<meta property="og:title" content="第 9 關：組牌組｜寶可夢卡牌訓練營">
+<meta property="og:description" content="學會正式牌組的規則和比例，還有一副可以直接上場的範例牌組！">
+<meta property="og:image" content="https://planktonthai.github.io/pokemon-master/assets/img/og.png">
+<meta property="og:url" content="https://planktonthai.github.io/pokemon-master/units/unit09.html">
+<link rel="canonical" href="https://planktonthai.github.io/pokemon-master/units/unit09.html">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@500;900&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@500;900&display=swap"></noscript>
+<!-- /seo -->
+<title>第 9 關：組牌組｜寶可夢卡牌訓練營</title>
+<link rel="stylesheet" href="../assets/css/style.min.css">
+<style>
+  .bar60{width:100%;max-width:720px;height:54px;display:flex;border:4px solid var(--ink);border-radius:16px;overflow:hidden;background:#fff;box-shadow:0 5px 0 var(--ink)}
+  .bar60 > div{width:0;transition:width 1s var(--pop);display:flex;align-items:center;justify-content:center;color:#fff;font-size:17px;white-space:nowrap;overflow:hidden;text-shadow:0 2px 0 rgba(0,0,0,.35)}
+  .bar60 .p{background:linear-gradient(180deg,#FF8A5C,#E8553D)} .bar60 .t{background:linear-gradient(180deg,#9FB2C8,#6E7F96)} .bar60 .e{background:linear-gradient(180deg,#FFE070,#E0A800);color:var(--ink);text-shadow:none}
+  .ratio{display:flex;flex-direction:column;align-items:center;gap:14px;width:100%}
+  .ratio .tips{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+  .ratio .tips .tile{max-width:230px}
+  .decklist{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:780px}
+  .decklist .grp{background:#fff;border:3px solid var(--ink);border-radius:16px;padding:10px;box-shadow:0 5px 0 var(--ink);opacity:.25;transition:opacity .5s,transform .5s var(--pop);font-size:15px;line-height:1.7}
+  .decklist .grp.on{opacity:1;transform:translateY(-4px)}
+  .decklist .grp:not(.on){opacity:.55;border-style:dashed;box-shadow:none;background:rgba(255,255,255,.35)}
+  .decklist .grp:not(.on) > *{visibility:hidden}
+  .decklist h3{margin:0 0 4px;font-weight:400;font-size:19px}
+  .decklist .n{float:right;background:var(--ink);color:#fff;border-radius:8px;padding:0 6px;font-size:13px}
+  @media (max-width:640px){ .decklist{grid-template-columns:1fr} }
+</style>
+</head>
+<body data-bgm="bgm_volcano" data-zone="volcano">
+<div class="wrap">
+  <div class="topbar">
+    <a class="btn" href="../index.html?zone=volcano">🗺 回地圖</a>
+    <span class="star-pill" aria-live="polite"></span>
+  </div>
+  <header class="unit-head">
+    <span class="tag" style="background:var(--lava)">高手火山・第 9 關</span>
+    <h1>組牌組</h1>
+    <p>學會正式牌組的規則和比例，還有一副可以直接上場的範例牌組！</p>
+  </header>
+
+  <section class="lesson" id="L1" data-partner="cloud" data-intro="組一副自己的牌組吧！先看看規則。">
+    <h2><span class="no">1</span>牌組的規則</h2>
+    <p>正式比賽的牌組要符合這些規則。</p>
+    <div class="stage " id="s1"></div>
+    <div class="caption" aria-live="polite"><span class="txt"></span></div>
+    <div class="controls"></div>
+  </section>
+  <section class="lesson" id="L2" data-partner="fruit" data-intro="60 張要怎麼分配呢？">
+    <h2><span class="no">2</span>牌組的比例</h2>
+    <p>寶可夢、訓練家、能量要放多少？</p>
+    <div class="stage " id="s2"></div>
+    <div class="caption" aria-live="polite"><span class="txt"></span></div>
+    <div class="controls"></div>
+  </section>
+  <section class="lesson" id="L3" data-partner="snail" data-intro="來看看一副真正的牌組長什麼樣子！">
+    <h2><span class="no">3</span>範例牌組：火焰雷電隊</h2>
+    <p>模擬對戰裡你會用到這副牌組！</p>
+    <div class="stage " id="s3"></div>
+    <div class="caption" aria-live="polite"><span class="txt"></span></div>
+    <div class="controls"></div>
+  </section>
+  <section class="lesson">
+    <h2><span class="no">🎮</span>牌組檢查員</h2>
+    <p>判斷這副牌組「合格」還是「不合格」。</p>
+    <div class="game" id="game"></div>
+  </section>
+  <section class="lesson">
+    <h2><span class="no">★</span>過關小測驗</h2>
+    <div class="quiz" id="quiz"></div>
+  </section>
+</div>
+
+<script src="../assets/js/audio.js"></script>
+<script src="../assets/js/common.js"></script>
+<script>
+(() => {
+  const { card, mini, sparkle, restart, Player } = PTCG;
+  PTCG.clouds();
+  PTCG.twinkles(document.querySelector('.unit-head'), 4);
+  PTCG.starPill(document.querySelector('.star-pill'));
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+  const hz = (stage, z) => { $$('.zone-box', stage).forEach(b => b.classList.toggle('hl', b.dataset.z === z)); };
+  const put = (el, html) => { el.insertAdjacentHTML('beforeend', html); const n = el.lastElementChild; if (!PTCG.fast) restart(n, 'pop-in'); return n; };
+  function matHTML(cls = '') {
+    return `<div class="mat ${cls}">
+      <div class="zone-box prize" data-z="prize"><span class="lbl">獎賞卡</span></div>
+      <div class="zone-box active" data-z="active"><span class="lbl">戰鬥場</span></div>
+      <div class="zone-box deck" data-z="deck"><span class="lbl">牌庫</span></div>
+      <div class="zone-box bench" data-z="bench"><span class="lbl">備戰區（最多 5 隻）</span></div>
+      <div class="zone-box discard" data-z="discard"><span class="lbl">棄牌區</span></div>
+    </div>`;
+  }
+  const nextHref = n => PTCG.AVAILABLE.includes('u' + n) ? 'unit' + String(n).padStart(2, '0') + '.html' : null;
+
+  /* ===== 動畫 1：規則 ===== */
+  const s1 = $('#s1');
+  const RULES = [['📦 剛好 60 張', '不能多也不能少，一定要剛好 60 張。', 'card_draw'],
+    ['4️⃣ 同名的卡最多 4 張', '例如「皮卡丘」最多放 4 張。', 'card_place'],
+    ['⚡ 基本能量不限張數', '基本能量卡想放幾張都可以。', 'energy_attach'],
+    ['🌟 ACE SPEC 最多 1 張', '超強的 ACE SPEC 卡，整副牌只能放 1 張。', 'star'],
+    ['🥚 一定要有基礎寶可夢', '沒有基礎寶可夢，比賽根本沒辦法開始！', 'correct']];
+  new Player($('#L1'), {
+    reset() { s1.innerHTML = '<div class="tile-grid">' + RULES.map(r => `<div class="tile hidden-card"><b style="font-weight:400;font-size:19px">${r[0]}</b><br><small>${r[1]}</small></div>`).join('') + '</div>'; },
+    steps: RULES.map((r, i) => ({ sfx: r[2], say: r[0].replace(/^\S+\s/, '') + '：' + r[1], dur: 4200, run() { const t = $$('.tile', s1)[i]; t.classList.remove('hidden-card'); restart(t, 'pop-in'); } }))
+  });
+
+  /* ===== 動畫 2：比例 ===== */
+  const s2 = $('#s2');
+  const TIPS = [['🎯 屬性 1～2 種就好', '屬性太多，能量會附不出來。'], ['📈 進化線要放齊', '基礎放最多、2階最少，例如 4-3-2。'], ['🔍 找卡、抽卡的訓練家要多', '精靈球、博士的研究，讓你更快找到需要的卡。']];
+  new Player($('#L2'), {
+    reset() { s2.innerHTML = `<div class="ratio"><div class="bar60"><div class="p"></div><div class="t"></div><div class="e"></div></div><div class="tips">${TIPS.map(t => `<div class="tile hidden-card"><b style="font-weight:400">${t[0]}</b><br><small>${t[1]}</small></div>`).join('')}</div></div>`; },
+    steps: [
+      { sfx: 'card_place', say: '寶可夢大約放 15～20 張，負責上場戰鬥。', dur: 4000, run() { const b = $('.bar60 .p', s2); b.style.width = '28%'; b.textContent = '寶可夢 17'; } },
+      { sfx: 'card_place', say: '訓練家卡大約 18～30 張，幫你抽牌、找卡、換寶可夢。', dur: 4200, run() { const b = $('.bar60 .t', s2); b.style.width = '30%'; b.textContent = '訓練家 18'; } },
+      { sfx: 'energy_attach', say: '能量大約 12～25 張，看招式需要多少能量來決定。加起來剛好 60 張！', dur: 5000, run() { const b = $('.bar60 .e', s2); b.style.width = '42%'; b.textContent = '能量 25'; } },
+      ...TIPS.map((t, i) => ({ sfx: 'star', say: t[0].replace(/^\S+\s/, '') + '：' + t[1], dur: 4200, run() { const e = $$('.tips .tile', s2)[i]; e.classList.remove('hidden-card'); restart(e, 'pop-in'); } }))
+    ]
+  });
+
+  /* ===== 動畫 3：範例牌組 ===== */
+  const s3 = $('#s3');
+  const G = [
+    ['🔥⚡ 寶可夢', 17, '小火龍 ×4<br>火恐龍 ×3<br>噴火龍 ×2<br>皮卡丘 ×4<br>雷丘 ×3<br>雷電獸 ex ×1'],
+    ['🎒 訓練家', 18, '精靈球 ×4（物品）<br>好傷藥 ×3（物品）<br>寶可夢交替 ×3（物品）<br>神奇糖果 ×2（物品）<br>博士的研究 ×4（支援者）<br>老大的指令 ×2（支援者）'],
+    ['⚡ 能量', 25, '基本火能量 ×13<br>基本雷能量 ×12']
+  ];
+  new Player($('#L3'), {
+    reset() { s3.innerHTML = '<div class="decklist">' + G.map(g => `<div class="grp"><h3>${g[0]}<span class="n">${g[1]} 張</span></h3>${g[2]}</div>`).join('') + '</div>'; },
+    steps: [
+      ...G.map((g, i) => ({ sfx: 'card_flip', say: `${g[0].replace(/^\S+\s/, '')}共 ${g[1]} 張。`, dur: 3800, run() { $$('.grp', s3)[i].classList.add('on'); } })),
+      { sfx: 'level_clear', say: '17 + 18 + 25 = 60 張！火和雷兩種屬性，進化線也放得很整齊，到模擬對戰試試看吧！', dur: 5200, run() { $$('.grp', s3).forEach((g, i) => this.wait(() => restart(g, 'jump'), i * 150)); } }
+    ]
+  });
+
+  /* ===== 小遊戲 ===== */
+  PTCG.yesNoGame($('#game'), { yes: '合格 ⭕', no: '不合格 ❌', cards: [
+    { q: '這副牌組總共 59 張。', a: false, why: '一定要剛好 60 張。' },
+    { q: '牌組裡放了 5 張「皮卡丘」。', a: false, why: '同名的卡最多 4 張。' },
+    { q: '牌組裡放了 20 張基本雷能量。', a: true, why: '基本能量不限張數！' },
+    { q: '牌組裡放了 2 張不同的 ACE SPEC 卡。', a: false, why: 'ACE SPEC 整副牌只能 1 張。' },
+    { q: '60 張裡面，一張基礎寶可夢都沒有。', a: false, why: '沒有基礎寶可夢就沒辦法開始比賽。' },
+    { q: '60 張，放了 4 張「博士的研究」和 4 張「精靈球」。', a: true, why: '同名 4 張以內，完全沒問題！' }
+  ] });
+
+  PTCG.quiz($('#quiz'), 'u9', [
+    { q: '一副正式的牌組要幾張？', opts: ['40 張', '50 張', '60 張', '想放幾張都可以'], a: 2, why: '剛好 60 張。' },
+    { q: '同名的卡（不是基本能量）最多可以放幾張？', opts: ['2 張', '3 張', '4 張', '6 張'], a: 2, why: '同名最多 4 張。' },
+    { q: '基本能量卡最多可以放幾張？', opts: ['4 張', '10 張', '不限張數'], a: 2, why: '基本能量不限張數。' },
+    { q: 'ACE SPEC 卡一副牌組最多幾張？', opts: ['1 張', '2 張', '4 張'], a: 0, why: 'ACE SPEC 只能 1 張。' },
+    { q: '新手組牌組，屬性放幾種比較好？', opts: ['1～2 種', '5 種', '越多越好'], a: 0, why: '1～2 種屬性，能量比較好準備。' },
+    { q: '放進化線時，哪一階通常放最多張？', opts: ['基礎', '1 階進化', '2 階進化'], a: 0, why: '基礎要先上場才能進化，所以放最多。' }
+  ], nextHref(10), 'fruit');
+
+})();
+</script>
+</body>
+</html>

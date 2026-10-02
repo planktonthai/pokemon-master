@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- seo -->
+<meta name="description" content="給小學 3～6 年級的卡牌遊戲教學網站。在 3D 冒險地圖上一關一關前進，跟著夥伴小怪獸看動畫、玩小遊戲、答題拿星星，最後和電腦來一場正式規則的對戰！">
+<meta name="theme-color" content="#5BA8F5">
+<link rel="icon" type="image/svg+xml" href="assets/img/icon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/img/icon-32.png">
+<link rel="apple-touch-icon" href="assets/img/icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="zh_TW">
+<meta property="og:site_name" content="寶可夢卡牌訓練營">
+<meta property="og:title" content="我的成就｜寶可夢卡牌訓練營">
+<meta property="og:description" content="給小學 3～6 年級的卡牌遊戲教學網站。在 3D 冒險地圖上一關一關前進，跟著夥伴小怪獸看動畫、玩小遊戲、答題拿星星，最後和電腦來一場正式規則的對戰！">
+<meta property="og:image" content="https://planktonthai.github.io/pokemon-master/assets/img/og.png">
+<meta property="og:url" content="https://planktonthai.github.io/pokemon-master/achievements.html">
+<link rel="canonical" href="https://planktonthai.github.io/pokemon-master/achievements.html">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@500;900&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@500;900&display=swap"></noscript>
+<!-- /seo -->
+<title>我的成就｜寶可夢卡牌訓練營</title>
+<link rel="stylesheet" href="assets/css/style.min.css">
+<style>
+  .hero-ach{display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center;background:#FFFBF0;border:4px solid var(--ink);border-radius:26px;box-shadow:0 8px 0 var(--ink);padding:18px 22px;margin:8px 0 22px}
+  .ring{--p:0;position:relative;width:150px;height:150px;border-radius:50%;
+    background:conic-gradient(var(--sun) calc(var(--p) * 1%),#E9E2CC 0);border:4px solid var(--ink);box-shadow:0 6px 0 var(--ink);display:grid;place-items:center}
+  .ring::before{content:"";position:absolute;inset:16px;border-radius:50%;background:#FFFBF0;border:3px solid var(--ink)}
+  .ring b{position:relative;font-family:'Noto Sans TC';font-weight:900;font-size:40px;line-height:1}
+  .ring small{position:relative;display:block;text-align:center;font-size:14px}
+  .hero-ach h1{margin:0 0 6px;font-weight:400;font-size:30px}
+  .hero-ach p{margin:4px 0;font-size:17px;line-height:1.6}
+  .hero-ach .say{display:flex;gap:10px;align-items:center;margin-top:8px}
+  .hero-ach .say .avatar{width:58px;height:58px;flex:none}
+  .stats{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+  .stats span{background:#fff;border:3px solid var(--ink);border-radius:14px;padding:2px 12px;font-size:16px}
+  h2.sec{display:inline-block;font-weight:400;font-size:22px;color:var(--ink);background:#FFFBF0;border:3px solid var(--ink);border-radius:16px;box-shadow:0 4px 0 var(--ink);padding:2px 16px;margin:26px 0 12px}
+  .zones{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+  .zcard{border:4px solid var(--ink);border-radius:22px;box-shadow:0 6px 0 var(--ink);overflow:hidden;background:#FFFBF0}
+  .zcard header{padding:8px 14px;font-size:19px;border-bottom:3px solid var(--ink);display:flex;justify-content:space-between;align-items:center}
+  .zcard.grass header{background:linear-gradient(180deg,#B9F0A8,#6BC25A)}
+  .zcard.canyon header{background:linear-gradient(180deg,#FFD9A8,#F3A04C)}
+  .zcard.volcano header{background:linear-gradient(180deg,#FFB8A8,#E8604C);color:#fff;text-shadow:0 2px 0 var(--ink)}
+  .zcard ul{list-style:none;margin:0;padding:6px 10px 10px}
+  .zcard li{display:grid;grid-template-columns:30px 1fr auto;gap:8px;align-items:center;padding:7px 4px;border-bottom:2px dashed #E3DAC2}
+  .zcard li:last-child{border-bottom:0}
+  .zcard li .no{width:30px;height:30px;border-radius:50%;border:3px solid var(--ink);background:var(--sun);display:grid;place-items:center;font-family:'Noto Sans TC';font-weight:900;font-size:14px}
+  .zcard li.locked{color:#5E5A4C}.zcard li.locked .no{background:#DDD8CB}
+  .zcard li a{color:inherit;text-decoration:none}
+  .zcard li a:hover{text-decoration:underline}
+  .zcard li small{display:block;font-size:13px;color:#6A6656}
+  .st{font-size:20px;letter-spacing:1px;color:#D8D2C0;-webkit-text-stroke:1px var(--ink);white-space:nowrap}
+  .st i{font-style:normal}.st i.on{color:var(--sun)}
+  .badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+  .badge{position:relative;text-align:center;background:#FFFBF0;border:4px solid var(--ink);border-radius:22px;box-shadow:0 6px 0 var(--ink);padding:14px 10px 12px}
+  .medal{width:84px;height:84px;margin:0 auto 8px;border-radius:50%;display:grid;place-items:center;font-size:40px;border:4px solid var(--ink);
+    background:radial-gradient(circle at 35% 28%,#fff 0 10%,#FFE88A 22%,#F5B82A 62%,#B47A00 100%);box-shadow:0 5px 0 var(--ink),inset 0 0 0 5px rgba(255,255,255,.45)}
+  .badge b{display:block;font-weight:400;font-size:17px}
+  .badge small{display:block;font-size:13px;color:#6A6656;margin-top:3px;line-height:1.35}
+  .badge time{display:block;font-size:12px;color:#8A7A4A;margin-top:4px}
+  .badge.off{background:#EFEBE0}
+  .badge.off .medal{background:#CFC9BA;filter:grayscale(1) brightness(.55) contrast(.6);box-shadow:0 5px 0 #8A8676}
+  .badge.off b{color:#6A6656}
+  .badge.got .medal{animation:medalIn .7s var(--pop) both}
+  @keyframes medalIn{from{transform:scale(.3) rotate(-30deg);opacity:0}}
+  @media (prefers-reduced-motion:reduce){.badge.got .medal{animation:none}}
+  @media (max-width:560px){ .hero-ach{grid-template-columns:1fr;justify-items:center;text-align:center}.hero-ach .say{justify-content:center}.stats{justify-content:center} .ring{width:128px;height:128px} .ring b{font-size:32px} }
+  .pending{visibility:hidden}
+</style>
+</head>
+<body data-zone="grass">
+<div class="wrap">
+  <div class="topbar">
+    <a class="btn" href="index.html">🗺 回地圖</a>
+    <span class="star-pill" aria-live="polite"></span>
+  </div>
+  <main id="main" class="pending">
+    <section class="hero-ach" aria-labelledby="t">
+      <div class="ring" id="ring" role="img"><div><b id="tot">0</b><small>/ 33 顆星</small></div></div>
+      <div>
+        <h1 id="t">🏅 我的成就</h1>
+        <div class="stats" id="stats"></div>
+        <div class="say" id="say"></div>
+      </div>
+    </section>
+    <h2 class="sec">🗺 關卡進度</h2>
+    <div class="zones" id="zones"></div>
+    <h2 class="sec">🎖 徽章收藏　<small id="bcount" style="font-size:17px"></small></h2>
+    <div class="badges" id="badges"></div>
+    <p style="color:var(--ink);font-size:15px;margin-top:22px">進度只存在這台裝置的瀏覽器裡。換裝置或清除瀏覽資料，進度會重新開始。</p>
+  </main>
+</div>
+<script src="assets/js/audio.js"></script>
+<script src="assets/js/common.js"></script>
+<script>
+  PTCG.clouds();
+  PTCG.starPill(document.querySelector('.star-pill'));
+  PTCG.checkBadges(true);
+  const R = PTCG.records(), tot = PTCG.totalStars(), U = PTCG.UNITS;
+  document.getElementById('tot').textContent = tot;
+  const ring = document.getElementById('ring');
+  ring.setAttribute('aria-label', `收集了 ${tot} 顆星，總共 33 顆`);
+  requestAnimationFrame(() => ring.style.setProperty('--p', Math.round(tot / 33 * 100)));
+  const cleared = U.filter(u => PTCG.getStars(u.id) > 0).length;
+  const perfect = Object.values(R.quiz || {}).filter(q => q.best === q.n).length;
+  document.getElementById('stats').innerHTML = `<span>✅ 過關 ${cleared} / ${U.length}</span><span>💯 測驗全對 ${perfect} 關</span><span>⚔️ 對戰 ${R.battles || 0} 場・贏 ${R.wins || 0} 場</span>`;
+  const next = U.find((u, i) => PTCG.isUnlocked(i) && !PTCG.getStars(u.id));
+  const msg = tot >= 33 ? '全部 33 顆星都拿到了！你就是卡牌大師！'
+    : next ? `下一站是「${next.no === '⚔' ? '' : '第 ' + next.no + ' 關 '}${next.name}」，我們一起去吧！`
+    : '每關的測驗全部答對就能拿到 3 顆星，再挑戰看看！';
+  document.getElementById('say').innerHTML = PTCG.avatar('cloud') + `<p>${msg}</p>`;
+  const ZN = { grass: '🌱 新手草原', canyon: '🏜️ 進階山谷', volcano: '🌋 高手火山' };
+  const stars = n => `<span class="st" role="img" aria-label="${n} 顆星">${[0, 1, 2].map(i => `<i class="${i < n ? 'on' : ''}">★</i>`).join('')}</span>`;
+  document.getElementById('zones').innerHTML = Object.keys(ZN).map(z => {
+    const list = U.map((u, i) => [u, i]).filter(([u]) => u.zone === z);
+    const got = list.reduce((a, [u]) => a + PTCG.getStars(u.id), 0);
+    return `<section class="zcard ${z}"><header><span>${ZN[z]}</span><span>${got} / ${list.length * 3} ★</span></header><ul>${list.map(([u, i]) => {
+      const open = PTCG.isUnlocked(i), q = (R.quiz || {})[u.id];
+      const href = u.id === 'battle' ? 'units/battle.html' : `units/unit${String(u.no).padStart(2, '0')}.html`;
+      const sub = u.id === 'battle' ? `對戰 ${R.battles || 0} 場・贏 ${R.wins || 0} 場` : q ? `測驗最佳：${q.best} / ${q.n} 題` : PTCG.getStars(u.id) ? '已過關' : open ? '還沒挑戰' : '🔒 通過前一關就會開放';
+      return `<li class="${open ? '' : 'locked'}"><span class="no">${u.no}</span><span>${open ? `<a href="${href}">${u.name}</a>` : u.name}<small>${sub}</small></span>${stars(PTCG.getStars(u.id))}</li>`;
+    }).join('')}</ul></section>`;
+  }).join('');
+  const B = PTCG.BADGES, have = (PTCG.records().badges) || {};
+  document.getElementById('bcount').textContent = `${B.filter(b => have[b.id]).length} / ${B.length}`;
+  const fmt = t => { const d = new Date(t); return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} 取得`; };
+  requestAnimationFrame(() => document.getElementById('main').classList.remove('pending'));
+  document.getElementById('badges').innerHTML = B.map((b, i) => have[b.id]
+    ? `<div class="badge got" style="--d:${i}"><div class="medal" style="animation-delay:${i * 60}ms" aria-hidden="true">${b.icon}</div><b>${b.name}</b><small>${b.how}</small><time>${fmt(have[b.id])}</time></div>`
+    : `<div class="badge off"><div class="medal" aria-hidden="true">${b.icon}</div><b>？？？</b><small>取得方法：${b.how}</small></div>`).join('');
+</script>
+</body>
+</html>

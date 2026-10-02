@@ -1,0 +1,25 @@
+{
+  "name": "寶可夢卡牌訓練營",
+  "short_name": "卡牌訓練營",
+  "description": "給小學 3～6 年級的寶可夢卡牌遊戲教學：3D 冒險地圖、動畫教學、互動小遊戲和模擬對戰，從新手一路學到高手。",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#BFE3FF",
+  "theme_color": "#5BA8F5",
+  "lang": "zh-Hant-TW",
+  "icons": [
+    {
+      "src": "assets/img/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

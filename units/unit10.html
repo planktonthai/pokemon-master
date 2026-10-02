@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- seo -->
+<meta name="description" content="最後一關！學會高手的思考方式，準備好去模擬對戰挑戰電腦了嗎？">
+<meta name="theme-color" content="#5BA8F5">
+<link rel="icon" type="image/svg+xml" href="../assets/img/icon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/img/icon-32.png">
+<link rel="apple-touch-icon" href="../assets/img/icon-180.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="zh_TW">
+<meta property="og:site_name" content="寶可夢卡牌訓練營">
+<meta property="og:title" content="第 10 關：策略運用｜寶可夢卡牌訓練營">
+<meta property="og:description" content="最後一關！學會高手的思考方式，準備好去模擬對戰挑戰電腦了嗎？">
+<meta property="og:image" content="https://planktonthai.github.io/pokemon-master/assets/img/og.png">
+<meta property="og:url" content="https://planktonthai.github.io/pokemon-master/units/unit10.html">
+<link rel="canonical" href="https://planktonthai.github.io/pokemon-master/units/unit10.html">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@500;900&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@500;900&display=swap"></noscript>
+<!-- /seo -->
+<title>第 10 關：策略運用｜寶可夢卡牌訓練營</title>
+<link rel="stylesheet" href="../assets/css/style.min.css">
+<style>
+  .vs2{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;max-width:720px}
+  .vs2 .col{background:#fff;border:3px solid var(--ink);border-radius:18px;padding:12px;box-shadow:0 5px 0 var(--ink)}
+  .vs2 h3{margin:0 0 6px;text-align:center;font-weight:400;font-size:20px}
+  .vs2 .pt{font-size:16px;padding:4px 8px;border-radius:10px;margin:4px 0;opacity:0;transform:translateY(8px);transition:all .4s var(--pop)}
+  .vs2 .pt.show{opacity:1;transform:none}
+  .vs2 .pt.good{background:#E8F8E3} .vs2 .pt.bad{background:#FFE9EC}
+  .plan{display:flex;flex-direction:column;gap:8px;width:100%;max-width:560px}
+  .plan .ck{background:#fff;border:3px solid var(--ink);border-radius:14px;padding:6px 14px;font-size:18px;opacity:.3;transition:opacity .4s,transform .4s var(--pop)}
+  .plan .ck.on{opacity:1;transform:translateX(10px);background:#FFF6C8}
+  .plan .ck.done{opacity:.85;background:#E8F8E3}
+</style>
+</head>
+<body data-bgm="bgm_volcano" data-zone="volcano">
+<div class="wrap">
+  <div class="topbar">
+    <a class="btn" href="../index.html?zone=volcano">🗺 回地圖</a>
+    <span class="star-pill" aria-live="polite"></span>
+  </div>
+  <header class="unit-head">
+    <span class="tag" style="background:var(--lava)">高手火山・第 10 關</span>
+    <h1>策略運用</h1>
+    <p>最後一關！學會高手的思考方式，準備好去模擬對戰挑戰電腦了嗎？</p>
+  </header>
+
+  <section class="lesson" id="L1" data-partner="fruit" data-intro="猜贏了硬幣，要選先攻還是後攻呢？">
+    <h2><span class="no">1</span>先攻還是後攻？</h2>
+    <p>兩種都有好處，高手會依牌組來選。</p>
+    <div class="stage " id="s1"></div>
+    <div class="caption" aria-live="polite"><span class="txt"></span></div>
+    <div class="controls"></div>
+  </section>
+  <section class="lesson" id="L2" data-partner="cloud" data-intro="高手在想什麼呢？">
+    <h2><span class="no">2</span>高手的五個好習慣</h2>
+    <p>學會這五招，你就是卡牌高手！</p>
+    <div class="stage " id="s2"></div>
+    <div class="caption" aria-live="polite"><span class="txt"></span></div>
+    <div class="controls"></div>
+  </section>
+  <section class="lesson" id="L3" data-partner="snail" data-intro="輪到你的時候，照這個順序做事！">
+    <h2><span class="no">3</span>一個回合的好順序</h2>
+    <p>照著這個順序，比較不會出錯。</p>
+    <div class="stage " id="s3"></div>
+    <div class="caption" aria-live="polite"><span class="txt"></span></div>
+    <div class="controls"></div>
+  </section>
+  <section class="lesson">
+    <h2><span class="no">🎮</span>高手判斷題</h2>
+    <p>遇到這些情況，你會怎麼做？</p>
+    <div class="game" id="game"></div>
+  </section>
+  <section class="lesson">
+    <h2><span class="no">★</span>過關小測驗</h2>
+    <div class="quiz" id="quiz"></div>
+  </section>
+</div>
+
+<script src="../assets/js/audio.js"></script>
+<script src="../assets/js/common.js"></script>
+<script>
+(() => {
+  const { card, mini, sparkle, restart, Player } = PTCG;
+  PTCG.clouds();
+  PTCG.twinkles(document.querySelector('.unit-head'), 4);
+  PTCG.starPill(document.querySelector('.star-pill'));
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+  const hz = (stage, z) => { $$('.zone-box', stage).forEach(b => b.classList.toggle('hl', b.dataset.z === z)); };
+  const put = (el, html) => { el.insertAdjacentHTML('beforeend', html); const n = el.lastElementChild; if (!PTCG.fast) restart(n, 'pop-in'); return n; };
+  function matHTML(cls = '') {
+    return `<div class="mat ${cls}">
+      <div class="zone-box prize" data-z="prize"><span class="lbl">獎賞卡</span></div>
+      <div class="zone-box active" data-z="active"><span class="lbl">戰鬥場</span></div>
+      <div class="zone-box deck" data-z="deck"><span class="lbl">牌庫</span></div>
+      <div class="zone-box bench" data-z="bench"><span class="lbl">備戰區（最多 5 隻）</span></div>
+      <div class="zone-box discard" data-z="discard"><span class="lbl">棄牌區</span></div>
+    </div>`;
+  }
+  const nextHref = n => PTCG.AVAILABLE.includes('u' + n) ? 'unit' + String(n).padStart(2, '0') + '.html' : null;
+
+  /* ===== 動畫 1：先攻後攻 ===== */
+  const s1 = $('#s1');
+  const pt = (c, t) => `<div class="pt ${c}">${t}</div>`;
+  new Player($('#L1'), {
+    reset() {
+      s1.innerHTML = `<div class="vs2"><div class="col"><h3>🥇 先攻</h3>${pt('good', '⭕ 比對手早一步準備寶可夢和能量')}${pt('bad', '❌ 第一回合不能攻擊')}${pt('bad', '❌ 第一回合不能用支援者')}</div>
+        <div class="col"><h3>🥈 後攻</h3>${pt('good', '⭕ 第一回合就能攻擊')}${pt('good', '⭕ 第一回合就能用支援者抽牌')}${pt('bad', '❌ 對手先準備好寶可夢')}</div></div>`;
+    },
+    steps: [
+      { sfx: 'correct', say: '先攻的好處：比對手早一步擺好寶可夢、附好能量。', dur: 4200, run() { $$('.col', s1)[0].querySelectorAll('.pt')[0].classList.add('show'); } },
+      { sfx: 'wrong', say: '但是先攻的第一回合不能攻擊，也不能用支援者。', dur: 4200, run() { $$('.col', s1)[0].querySelectorAll('.pt').forEach(p => p.classList.add('show')); } },
+      { sfx: 'correct', say: '後攻的好處：第一回合就能攻擊，還能用支援者卡抽牌！', dur: 4200, run() { const p = $$('.col', s1)[1].querySelectorAll('.pt'); p[0].classList.add('show'); p[1].classList.add('show'); } },
+      { sfx: 'star', say: '小秘訣：需要很多準備的牌組適合先攻；想要快點打人的牌組適合後攻。', dur: 5200, run() { $$('.col .pt', s1).forEach(p => p.classList.add('show')); } }
+    ]
+  });
+
+  /* ===== 動畫 2：五個好習慣 ===== */
+  const s2 = $('#s2');
+  const H = [
+    ['🪑 培養接班人', '備戰區要準備第二隻攻擊手，前面的昏厥了，馬上有人接手。', 'card_place'],
+    ['⚡ 每回合都附能量', '能量每回合只能附 1 張，一定不要忘記！先想好要附給誰。', 'energy_attach'],
+    ['🎁 計算獎賞卡', '擊倒 ex 拿 2 張、超級進化 ex 拿 3 張。算一算還要擊倒幾隻才會贏。', 'star'],
+    ['🎯 抓住好機會', '用「老大的指令」把對手備戰區快昏厥、或很重要的寶可夢拉出來打。', 'attack_hit'],
+    ['🔄 聰明撤退', '快昏厥的強力寶可夢可以先撤退，保護牠不讓對手拿獎賞卡。', 'card_flip']
+  ];
+  new Player($('#L2'), {
+    reset() { s2.innerHTML = '<div class="tile-grid">' + H.map(h => `<div class="tile hidden-card"><b style="font-weight:400;font-size:18px">${h[0]}</b><br><small>${h[1]}</small></div>`).join('') + '</div>'; },
+    steps: H.map((h, i) => ({ sfx: h[2], say: h[0].replace(/^\S+\s/, '') + '：' + h[1], dur: 5200, run() { const t = $$('.tile', s2)[i]; t.classList.remove('hidden-card'); restart(t, 'pop-in'); } }))
+  });
+
+  /* ===== 動畫 3：回合順序 ===== */
+  const s3 = $('#s3');
+  const PLAN = ['🃏 抽 1 張牌', '👀 看看手牌，想好這回合要做什麼', '🔍 先用抽牌、找牌的卡（精靈球、博士的研究）', '🪑 放基礎寶可夢、讓寶可夢進化', '⚡ 附 1 張能量', '🔄 需要的話撤退或交換', '⚔️ 最後才攻擊！'];
+  new Player($('#L3'), {
+    reset() { s3.innerHTML = '<div class="plan">' + PLAN.map(p => `<div class="ck">${p}</div>`).join('') + '</div>'; },
+    steps: PLAN.map((p, i) => ({ sfx: i === 6 ? 'attack_super' : 'card_draw', say: ['每回合從抽牌開始。', '先別急！看看手上有什麼牌。', '先用抽牌、找牌的卡，手牌變多，選擇也變多。', '把寶可夢放好、進化好。', '別忘了附能量！', '戰鬥寶可夢快不行了？換一隻上來。', '全部準備好，最後才攻擊。攻擊完回合就結束了！'][i], dur: 3800,
+      run() { $$('.ck', s3).forEach((c, k) => { c.classList.toggle('on', k === i); c.classList.toggle('done', k < i); }); } }))
+  });
+
+  /* ===== 小遊戲 ===== */
+  PTCG.choiceGame($('#game'), { rounds: [
+    { q: '你的戰鬥寶可夢剩 10 HP，備戰區有一隻能量滿滿的雷丘。你會怎麼做？', opts: ['撤退或交換，讓雷丘上場', '什麼都不做', '把能量全部丟掉'], a: 0, why: '讓準備好的寶可夢上場攻擊，才不會浪費回合！' },
+    { q: '對手備戰區有一隻只剩 30 HP 的 ex，你的招式有 90 點。最好的支援者是？', opts: ['博士的研究', '老大的指令', '不用支援者'], a: 1, why: '用老大的指令把牠拉出來擊倒，一次拿 2 張獎賞卡！' },
+    { q: '這回合還沒附能量，手上有火能量，準備要攻擊了。你應該……', opts: ['直接攻擊', '先附能量再攻擊', '留著下回合再附'], a: 1, why: '攻擊完回合就結束，一定要先附能量！' },
+    { q: '你還剩 2 張獎賞卡，對手戰鬥場是一隻寶可夢 ex。擊倒牠會怎樣？', opts: ['還剩 1 張', '拿完 2 張，獲勝！', '沒有變化'], a: 1, why: 'ex 給 2 張，剛好拿完就贏了！' },
+    { q: '備戰區完全沒有寶可夢，只有戰鬥場 1 隻。這樣危險嗎？', opts: ['很危險，牠昏厥就輸了', '一點也不危險'], a: 0, why: '場上沒有寶可夢就輸了，所以一定要放備戰區！' }
+  ] });
+
+  PTCG.quiz($('#quiz'), 'u10', [
+    { q: '後攻的好處是什麼？', opts: ['第一回合就能攻擊', '多拿 1 張獎賞卡', '可以附 2 張能量'], a: 0, why: '後攻第一回合就能攻擊，也能用支援者。' },
+    { q: '為什麼要在備戰區培養「接班人」？', opts: ['比較好看', '前面的昏厥時，馬上有人接手攻擊', '可以多抽牌'], a: 1, why: '有接班人，才不會被打得措手不及。' },
+    { q: '一個回合裡，攻擊應該放在什麼時候？', opts: ['第一件事', '最後一件事', '中間任何時候'], a: 1, why: '攻擊完回合就結束了，要最後做。' },
+    { q: '「老大的指令」可以做什麼？', opts: ['抽 7 張牌', '把對手備戰區的寶可夢換到戰鬥場', '治療 30 點傷害'], a: 1, why: '可以把對手想保護的寶可夢拉出來打！' },
+    { q: '你的寶可夢 ex 快昏厥了，備戰區有別的寶可夢。聰明的做法是？', opts: ['撤退保護牠', '讓牠留在前面', '把牠丟進棄牌區'], a: 0, why: '撤退保護 ex，不讓對手一次拿 2 張。' },
+    { q: '每個回合都一定不要忘記做的是？', opts: ['附 1 張能量', '撤退', '用 4 張物品卡'], a: 0, why: '能量每回合只能附 1 張，錯過就沒了！' }
+  ], PTCG.AVAILABLE.includes('battle') ? 'battle.html' : null, 'cloud');
+
+})();
+</script>
+</body>
+</html>

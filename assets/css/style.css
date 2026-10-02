@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@500;900&display=swap');
+/* 字型改由各頁 <head> 的 link 載入 */
 
 :root{
   --ink:#1F2A5C;
@@ -769,3 +769,271 @@ a{color:inherit}
 .ex-col .pc-hp b{font-size:16px}
 .ex-col .pc-top{flex-wrap:wrap}
 .ex-col .pc-top{justify-content:space-between} .ex-col .pc-name{flex:1 1 100%;order:3;font-size:16px}
+
+/* =========================================
+   第 1 輪：設計規範（tokens）
+   ========================================= */
+:root{
+  --ease-out:cubic-bezier(.22,1,.36,1);
+  --ease-pop:cubic-bezier(.34,1.8,.5,1);
+  --dur-fast:.18s; --dur-med:.4s; --dur-slow:.8s;
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:32px;
+  --r-sm:10px; --r-md:16px; --r-lg:22px; --r-xl:28px;
+  --shadow-hard:0 6px 0 var(--ink);
+  --zone:#5CC75A; --zone-2:#9BE08E; --zone-ink:#173404;
+}
+body[data-zone="canyon"]{--zone:#E07A3F;--zone-2:#FFC98A;--zone-ink:#5A2410}
+body[data-zone="volcano"]{--zone:#E8453C;--zone-2:#FF9A8A;--zone-ink:#3A0A0A}
+
+/* ===== 各區域主題：草原晴空、山谷夕陽、火山暗夜 ===== */
+body[data-zone="canyon"]{background:linear-gradient(180deg,#FFE3B8 0%,#F7B57A 55%,#E58A50 100%) fixed}
+body[data-zone="canyon"] .cloud{background:#FFF1DE;opacity:.75}
+body[data-zone="canyon"] .stage-wrap{background:linear-gradient(180deg,#4A2A5A 0%,#B8504A 42%,#F2A160 100%)}
+body[data-zone="canyon"] .stage-wrap .floor{background:
+    radial-gradient(ellipse at 50% 40%,rgba(255,226,170,.8),rgba(255,226,170,0) 55%),
+    repeating-linear-gradient(90deg,rgba(120,50,20,.25) 0 2px,transparent 2px 60px),
+    repeating-linear-gradient(0deg,rgba(120,50,20,.25) 0 2px,transparent 2px 60px),
+    linear-gradient(#F2C58E,#D9824B)}
+body[data-zone="volcano"]{background:linear-gradient(180deg,#2B1A26 0%,#4A2026 55%,#6A2A1E 100%) fixed;color:var(--ink)}
+body[data-zone="volcano"] .cloud{background:#5A4448;opacity:.45}
+body[data-zone="volcano"] .stage-wrap{background:linear-gradient(180deg,#120A18 0%,#3A1420 45%,#7A2A18 100%)}
+body[data-zone="volcano"] .stage-wrap .floor{background:
+    radial-gradient(ellipse at 50% 40%,rgba(255,120,40,.65),rgba(255,120,40,0) 55%),
+    repeating-linear-gradient(90deg,rgba(255,110,40,.55) 0 2px,transparent 2px 60px),
+    repeating-linear-gradient(0deg,rgba(255,110,40,.55) 0 2px,transparent 2px 60px),
+    linear-gradient(#3A2A2A,#1E1414)}
+body[data-zone="volcano"] .stage-wrap .spot{background:radial-gradient(circle at var(--lx,50%) var(--ly,20%),rgba(255,160,90,.3),transparent 42%)}
+body[data-zone="volcano"] .unit-head .twinkle{color:#FF8A3D}
+body[data-zone] .unit-head{border-top:10px solid var(--zone)}
+body[data-zone] .lesson h2 .no{background:var(--zone)}
+
+/* 火山區的飄浮火星（純 CSS） */
+body[data-zone="volcano"] .sky-deco::before,body[data-zone="volcano"] .sky-deco::after{
+  content:"";position:absolute;inset:-20% 0 0;pointer-events:none;
+  background-image:radial-gradient(2px 2px at 10% 80%,#FFB060,transparent),radial-gradient(3px 3px at 30% 60%,#FF7A2B,transparent),radial-gradient(2px 2px at 55% 90%,#FFD08A,transparent),radial-gradient(3px 3px at 75% 70%,#FF7A2B,transparent),radial-gradient(2px 2px at 90% 85%,#FFB060,transparent);
+  background-size:100% 100%;animation:embers 9s linear infinite;opacity:.8
+}
+body[data-zone="volcano"] .sky-deco::after{animation-duration:13s;animation-delay:-5s;transform:scaleX(-1)}
+@keyframes embers{from{transform:translateY(20%)}to{transform:translateY(-60%)}}
+
+/* ===== 換頁轉場：圓形光圈 ===== */
+.page-wipe{position:fixed;inset:0;z-index:200;pointer-events:none;display:flex;align-items:center;justify-content:center}
+.page-wipe .iris{position:absolute;left:var(--wx,50%);top:var(--wy,50%);width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;
+  background:radial-gradient(circle,var(--zone-2) 0 30%,var(--zone) 70%);box-shadow:0 0 0 4px var(--ink);transform:scale(0);transition:transform .5s var(--ease-out)}
+.page-wipe .avatar{position:relative;width:110px;height:110px;opacity:0;transform:scale(.4);transition:opacity .25s,transform .4s var(--ease-pop)}
+.page-wipe.cover .iris{transform:scale(var(--ws,300))}
+.page-wipe.cover .avatar{opacity:1;transform:none}
+.page-wipe.cover{pointer-events:auto}
+
+/* ===== 頁尾與聲明 ===== */
+.site-foot{margin:32px auto 0;max-width:760px;text-align:center;font-size:14px;line-height:1.7;color:var(--ink);background:rgba(255,255,255,.75);border:3px solid var(--ink);border-radius:var(--r-md);padding:10px 16px}
+.site-foot a{color:var(--ink);font-weight:700}
+body[data-zone="volcano"] .site-foot{background:rgba(255,251,240,.9)}
+
+/* ===== 焦點樣式統一 ===== */
+:focus-visible{outline:4px solid #FFCE3A;outline-offset:3px;box-shadow:0 0 0 7px var(--ink)}
+@media (prefers-reduced-motion:reduce){
+  .page-wipe .iris,.page-wipe .avatar{transition:none}
+  body[data-zone="volcano"] .sky-deco::before,body[data-zone="volcano"] .sky-deco::after{animation:none}
+}
+.page-wipe .iris{box-shadow:none;background:radial-gradient(circle,var(--zone-2) 0 25%,var(--zone) 60%,var(--zone-ink) 100%)}
+.page-wipe .avatar{z-index:1;filter:drop-shadow(0 8px 0 rgba(31,42,92,.35))}
+.page-wipe.cover .avatar{animation:talk .6s var(--ease-pop) .15s}
+
+/* =========================================
+   第 2 輪：統一卡片元件（金屬卡框＋卡面＋稀有度）
+   ========================================= */
+.pcard{
+  --frame:linear-gradient(145deg,
+    color-mix(in srgb,var(--tc) 45%,#fff) 0%,var(--tc) 22%,
+    color-mix(in srgb,var(--tc) 62%,#1F2A5C) 48%,var(--tc) 70%,
+    color-mix(in srgb,var(--tc) 35%,#fff) 100%);
+  padding:7px;gap:0;border:3px solid var(--ink);border-radius:17px;
+  background:var(--frame);background-color:var(--tc);
+  box-shadow:0 6px 0 var(--ink),0 18px 26px -14px rgba(20,24,70,.55);
+  isolation:isolate;
+}
+.pcard .pc-body{
+  position:relative;flex:1;display:flex;flex-direction:column;gap:6px;min-height:0;
+  border:2px solid var(--ink);border-radius:11px;padding:7px 7px 6px;
+  background:
+    radial-gradient(circle at 1px 1px,rgba(31,42,92,.07) 1px,transparent 1.6px) 0 0/7px 7px,
+    linear-gradient(172deg,#fff 0%,var(--tl) 34%,var(--tl) 100%);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.9);
+}
+/* 插圖窗：屬性色放射光＋地平線 */
+.pcard .pc-art{
+  position:relative;border:2px solid var(--ink);border-radius:9px;overflow:hidden;
+  background:
+    linear-gradient(180deg,transparent 62%,rgba(31,42,92,.18) 62%,rgba(31,42,92,.05) 100%),
+    repeating-conic-gradient(from 0deg at 50% 64%,rgba(255,255,255,.26) 0 9deg,rgba(255,255,255,0) 9deg 18deg),
+    radial-gradient(circle at 50% 60%,color-mix(in srgb,var(--tc) 30%,#fff) 0%,var(--tc) 58%,color-mix(in srgb,var(--tc) 70%,#1F2A5C) 100%);
+  box-shadow:inset 0 3px 0 rgba(0,0,0,.14),inset 0 -2px 0 rgba(255,255,255,.35);
+  -webkit-text-stroke:0;color:inherit;
+}
+.pcard .pc-art .glyph,.pcard .pc-art .orb{
+  position:relative;font-family:'Noto Sans TC';font-weight:900;color:#fff;line-height:1;
+  -webkit-text-stroke:2.5px var(--ink);paint-order:stroke fill;
+  filter:drop-shadow(0 4px 0 rgba(31,42,92,.45));
+}
+.pcard .pc-art.long .glyph{font-size:.72em}
+.pcard .pc-art .ico{font-size:42px;filter:drop-shadow(0 4px 0 rgba(31,42,92,.3))}
+.pcard .pc-top{align-items:center}
+.pcard .pc-name{font-weight:400;letter-spacing:.02em;overflow:hidden;text-overflow:ellipsis}
+.pcard .pc-hp b{color:var(--td)}
+.pcard .pc-stage{background:linear-gradient(180deg,#fff,#E9EEF8)}
+.pcard .pc-atks{display:flex;flex-direction:column;gap:2px}
+.pcard .pc-atk{border-bottom:1px dashed color-mix(in srgb,var(--td) 35%,transparent)}
+.pcard .pc-atk:last-child{border-bottom:0}
+.pcard .pc-atk .dmg{font-family:'Noto Sans TC';font-weight:900;color:var(--ink)}
+.pcard .pc-foot{border-top:2px solid var(--ink);background:color-mix(in srgb,var(--tc) 14%,#fff);margin:auto -7px -6px;padding:5px 4px 6px;border-radius:0 0 9px 9px}
+.exmark{font-family:'Noto Sans TC';font-weight:900;font-style:italic;font-size:.95em;color:#fff;
+  -webkit-text-stroke:2px var(--ink);paint-order:stroke fill;padding:0 1px}
+
+/* 能量卡：大能量球 */
+.pcard.energy .pc-art{display:flex;align-items:center;justify-content:center;font-size:inherit}
+.pcard.energy .orb{
+  display:flex;align-items:center;justify-content:center;width:118px;height:118px;border-radius:50%;
+  font-size:64px;border:3px solid var(--ink);
+  background:radial-gradient(circle at 34% 28%,#fff 0 8%,color-mix(in srgb,var(--tc) 40%,#fff) 16%,var(--tc) 55%,color-mix(in srgb,var(--tc) 65%,#1F2A5C) 100%);
+  box-shadow:0 6px 0 rgba(31,42,92,.35),0 0 0 6px rgba(255,255,255,.35);
+}
+.pcard.energy.t-lightning .orb,.pcard.energy.t-colorless .orb{color:#fff}
+
+/* 訓練家：物品藍、支援者橘、競技場綠、道具紫 */
+.pcard.trainer.tr-item{--tc:#6E8BC4;--tl:#EEF2FA;--td:#2B3D66}
+.pcard.trainer.tr-sup{--tc:#EE8A4A;--tl:#FFF1E6;--td:#7A3A10}
+.pcard.trainer.tr-stad{--tc:#4FAE6A;--tl:#E8F7EC;--td:#1F5A30}
+.pcard.trainer.tr-tool{--tc:#9C6FD6;--tl:#F3ECFC;--td:#4A2A7A}
+.pcard.trainer .pc-art{display:flex;align-items:center;justify-content:center;height:84px}
+
+/* ---- 光效：指標反光（全部）＋掃光（稀有卡） ---- */
+.pcard::before{
+  content:"";position:absolute;inset:0;border-radius:14px;pointer-events:none;z-index:4;opacity:0;
+  background:radial-gradient(circle at var(--mx,50%) var(--my,30%),rgba(255,255,255,.85) 0%,rgba(255,255,255,0) 42%);
+  mix-blend-mode:soft-light;transition:opacity .3s;
+}
+.pcard.tilt::before{opacity:.6}
+.pcard::after{animation:none;opacity:0}
+/* ex：彩虹鐳射卡框＋全卡鐳射紋 */
+.pcard.r-ex{
+  --frame:linear-gradient(125deg,#FFC7EE 0%,#FFF2A6 18%,#B9FFE6 36%,#B5D2FF 54%,#E2BDFF 72%,#FFC7EE 90%);
+  background:var(--frame);background-size:260% 260%;background-position:var(--mx,30%) var(--my,30%);
+}
+.pcard.r-ex .pc-body::after{
+  content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;opacity:.22;mix-blend-mode:color-dodge;
+  background:
+    repeating-linear-gradient(115deg,rgba(255,111,216,.5) 0 6px,rgba(255,230,109,.5) 6px 12px,rgba(111,255,210,.5) 12px 18px,rgba(111,179,255,.5) 18px 24px);
+  background-size:200% 200%;background-position:var(--mx,40%) var(--my,40%);transition:opacity .3s;
+}
+.pcard.r-ex.tilt .pc-body::after{opacity:.55}
+.pcard.r-ex::after,.pcard.r-ace::after{
+  opacity:.75;animation:cardSheen 6s ease-in-out infinite;
+  background:linear-gradient(115deg,transparent 44%,rgba(255,255,255,.9) 50%,transparent 56%);background-size:300% 100%;
+}
+/* ACE SPEC：金框＋光暈＋緞帶 */
+.pcard.r-ace{
+  --frame:linear-gradient(145deg,#FFF6C2 0%,#EDBE2A 26%,#8E6000 50%,#F5CF55 72%,#FFF8D6 100%);
+  background:var(--frame);
+  box-shadow:0 6px 0 var(--ink),0 0 0 3px rgba(255,214,90,.55),0 0 26px 6px rgba(255,200,60,.55);
+}
+.pc-ace{
+  position:absolute;z-index:5;top:-12px;left:50%;transform:translateX(-50%);white-space:nowrap;
+  font-family:'Noto Sans TC';font-weight:900;font-size:12px;letter-spacing:.08em;color:#fff;
+  background:linear-gradient(180deg,#FF5A7A,#D02A55);border:2px solid var(--ink);border-radius:8px;padding:1px 10px;
+  box-shadow:0 3px 0 var(--ink);
+}
+@media (prefers-reduced-motion:reduce){ .pcard.r-ex::after,.pcard.r-ace::after{animation:none;opacity:0} }
+/* 名稱列：階段標籤移到插圖窗左上角，名稱空間加大 */
+.pcard .pc-top{gap:4px}
+.pcard .pc-name{flex:1 1 auto;min-width:0;font-size:20px}
+.pcard .pc-name.nm-m{font-size:18px}
+.pcard .pc-name.nm-s{font-size:16px}
+.pcard .pc-art .pc-stage{position:absolute;top:5px;left:5px;z-index:2;font-size:11px;line-height:1.5;padding:0 6px;border-width:2px}
+.pcard .pc-art .pc-stage.hl{transform:scale(1.15)}
+/* ex：鐳射只在插圖窗與卡框，文字區保持清楚 */
+.pcard.r-ex .pc-body::after{display:none}
+.pcard.r-ex .pc-art::after{
+  content:"";position:absolute;inset:0;pointer-events:none;opacity:.55;mix-blend-mode:overlay;
+  background:repeating-linear-gradient(115deg,#ff6fd8 0 7px,#ffe66d 7px 14px,#6fffd2 14px 21px,#6fb3ff 21px 28px,#c86fff 28px 35px);
+  background-size:220% 220%;background-position:var(--mx,40%) var(--my,40%);transition:opacity .3s;
+}
+.pcard.r-ex.tilt .pc-art::after{opacity:.85}
+.pcard.r-ex .pc-name{color:var(--ink)}
+
+/* ===== 第 2 輪：得到徽章通知 ===== */
+.badge-toast{position:fixed;left:50%;top:14px;z-index:90;display:flex;align-items:center;gap:12px;
+  background:#FFFBF0;border:4px solid var(--ink);border-radius:20px;box-shadow:0 6px 0 var(--ink),0 0 30px rgba(255,206,58,.7);
+  padding:8px 10px 8px 8px;transform:translate(-50%,-140%);transition:transform .6s var(--pop)}
+.badge-toast.show{transform:translate(-50%,0)}
+.badge-toast .bt-ico{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;font-size:28px;border:3px solid var(--ink);
+  background:radial-gradient(circle at 35% 28%,#fff 0 10%,#FFE88A 22%,#F5B82A 62%,#B47A00)}
+.badge-toast small{display:block;font-size:13px;color:#8A6A10}
+.badge-toast b{display:block;font-weight:400;font-size:19px}
+.badge-toast a{margin-left:6px;background:var(--sun);border:3px solid var(--ink);border-radius:12px;padding:2px 10px;color:var(--ink);text-decoration:none;font-size:15px;white-space:nowrap}
+
+/* ===== 第 2 輪：第一次進站引導 ===== */
+.guide{position:fixed;inset:0;z-index:80}
+.guide-spot{position:fixed;border-radius:20px;pointer-events:none;box-shadow:0 0 0 4px #FFE066,0 0 0 9999px rgba(18,24,64,.62);
+  transition:top .5s var(--pop),left .5s var(--pop),width .5s var(--pop),height .5s var(--pop),border-radius .5s}
+.guide-spot.none{box-shadow:0 0 0 9999px rgba(18,24,64,.62)}
+.guide-card{position:fixed;width:min(380px,calc(100vw - 24px));display:grid;grid-template-columns:86px 1fr;gap:10px;align-items:center;
+  background:#FFFBF0;border:4px solid var(--ink);border-radius:24px;box-shadow:0 8px 0 var(--ink);padding:12px 14px;
+  transition:top .5s var(--pop),left .5s var(--pop)}
+.guide-card .avatar{width:86px;height:86px}
+.guide-card .avatar.enter{animation:guideIn .9s var(--pop) both}
+@keyframes guideIn{0%{transform:translateY(60px) scale(.2) rotate(-20deg);opacity:0}60%{transform:translateY(-10px) scale(1.1)}100%{transform:none;opacity:1}}
+.guide-card h2{margin:0 0 4px;font-weight:400;font-size:20px}
+.guide-card p{margin:0;font-size:16px;line-height:1.55}
+.guide-card .row{grid-column:1/-1;display:flex;align-items:center;gap:8px;margin-top:4px}
+.guide-card .dots{display:flex;gap:5px;flex:1}
+.guide-card .dots i{width:9px;height:9px;border-radius:50%;background:#D8D0B8;border:2px solid var(--ink)}
+.guide-card .dots i.on{background:var(--sun);transform:scale(1.25)}
+.guide-card .skip{background:none;border:0;font:inherit;font-size:15px;color:#5A5648;text-decoration:underline;cursor:pointer;padding:6px}
+@media (prefers-reduced-motion:reduce){.guide-spot,.guide-card{transition:none}.guide-card .avatar.enter{animation:none}}
+/* 卡片變窄時（手機、並排比較）文字跟著縮小，名稱不被截斷 */
+.pcard{container-type:inline-size}
+@container (max-width:200px){
+  .pc-name{font-size:16px !important}
+  .pc-name.nm-m{font-size:15px !important}
+  .pc-name.nm-s{font-size:13px !important}
+  .pc-hp b{font-size:16px}
+}
+
+/* 第 2 輪：場地示意小卡，換成同一套金屬卡框 */
+.mini{
+  container-type:inline-size;padding:3px;
+  background:linear-gradient(145deg,color-mix(in srgb,var(--tc) 45%,#fff),var(--tc) 25%,color-mix(in srgb,var(--tc) 62%,#1F2A5C) 50%,var(--tc) 72%,color-mix(in srgb,var(--tc) 35%,#fff));
+}
+.mini:not(.back){display:flex;flex-direction:column;justify-content:space-between;align-items:stretch;text-align:center}
+.mini:not(.back)::before{left:6px;right:6px;top:30%;height:34%;border-radius:4px;
+  background:repeating-conic-gradient(from 0deg at 50% 64%,rgba(255,255,255,.28) 0 10deg,transparent 10deg 20deg),var(--tc)}
+.mini b,.mini small{display:block;background:var(--tl);border:1.5px solid var(--ink);border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:clip;line-height:1.3}
+.mini b{font-size:clamp(8px,19cqw,12px);letter-spacing:-.02em}
+.mini small{font-size:clamp(7px,15cqw,10px)}
+.mini.trainer{--tc:#6E8BC4;--tl:#EEF2FA}
+
+/* 小卡的屬性顏色（原本被預設灰色蓋掉） */
+.mini.t-grass{--tc:#5CC75A;--tl:#E3F7DC;--td:#23601F}
+.mini.t-fire{--tc:#FF7043;--tl:#FFE3D9;--td:#8A2A0C}
+.mini.t-water{--tc:#3BA7F0;--tl:#DDF0FD;--td:#0D4C7A}
+.mini.t-lightning{--tc:#FFCE3A;--tl:#FFF3C4;--td:#6B4E00}
+.mini.t-psychic{--tc:#B071E0;--tl:#F1E4FB;--td:#52237A}
+.mini.t-fighting{--tc:#C8763A;--tl:#F6E3D4;--td:#5E300F}
+.mini.t-dark{--tc:#4A4A6A;--tl:#E1E1EA;--td:#23233A}
+.mini.t-metal{--tc:#9AA7B8;--tl:#EEF1F5;--td:#3B4454}
+.mini.t-dragon{--tc:#C9A227;--tl:#F7EDCB;--td:#5A4608}
+.mini.t-colorless{--tc:#E8E4DA;--tl:#FAF8F3;--td:#5A5648}
+.badge-toast{width:max-content;max-width:calc(100vw - 20px)}
+.badge-toast b,.badge-toast small{white-space:nowrap}
+
+/* ===== 第 3 輪：對比與版面穩定 ===== */
+.unit-head .tag{color:var(--ink)}
+.topbar{flex-wrap:nowrap;min-height:50px}
+.topbar > *{min-width:0}
+@media (max-width:480px){
+  .topbar{gap:6px}
+  .topbar .btn{padding:6px 10px;font-size:15px}
+  .topbar .star-pill{padding:4px 10px;font-size:15px;white-space:nowrap}
+}
+.unit-head .tag[style*="lava"]{background:#FF8C7E !important}

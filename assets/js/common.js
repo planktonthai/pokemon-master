@@ -3,7 +3,7 @@ const PTCG = (() => {
   const KEY = 'ptcg-camp-progress-v1';
 
   /* 已完成製作的單元（新增單元時加進來） */
-  const AVAILABLE = ['u1', 'u2', 'u3', 'u4', 'u5', 'u6', 'u7', 'u8'];
+  const AVAILABLE = ['u1', 'u2', 'u3', 'u4', 'u5', 'u6', 'u7', 'u8', 'u9', 'u10', 'battle'];
 
   const UNITS = [
     { id: 'u1', no: 1, name: '認識卡牌', zone: 'grass' },
@@ -25,6 +25,43 @@ const PTCG = (() => {
   function getStars(id) { return load()[id] || 0; }
   function setStars(id, n) { const p = load(); if (n > (p[id] || 0)) { p[id] = n; save(p); } }
   function totalStars() { return Object.values(load()).reduce((a, b) => a + b, 0); }
+  /* ---------- 紀錄與徽章（第 2 輪） ---------- */
+  const RKEY = 'ptcg-camp-records-v1';
+  function records() { try { return JSON.parse(localStorage.getItem(RKEY)) || {}; } catch (e) { return {}; } }
+  function saveRecords(r) { try { localStorage.setItem(RKEY, JSON.stringify(r)); } catch (e) { /* 無法儲存時略過 */ } }
+  function record(fn) { const r = records(); fn(r); saveRecords(r); checkBadges(); return r; }
+  const passed = ids => ids.every(id => getStars(id) > 0);
+  const BADGES = [
+    { id: 'first', icon: '🌱', name: '踏出第一步', how: '通過第 1 關', ok: () => passed(['u1']) },
+    { id: 'grass', icon: '🎓', name: '草原畢業', how: '通過第 1～4 關', ok: () => passed(['u1', 'u2', 'u3', 'u4']) },
+    { id: 'canyon', icon: '🏜️', name: '山谷探險家', how: '通過第 5～8 關', ok: () => passed(['u5', 'u6', 'u7', 'u8']) },
+    { id: 'volcano', icon: '🌋', name: '火山挑戰者', how: '通過第 9、10 關', ok: () => passed(['u9', 'u10']) },
+    { id: 'perfect', icon: '💯', name: '滿分小天才', how: '任何一關的測驗全部答對', ok: r => Object.values(r.quiz || {}).some(q => q.best === q.n) },
+    { id: 'perfect5', icon: '🧠', name: '知識博士', how: '5 個關卡的測驗全部答對', ok: r => Object.values(r.quiz || {}).filter(q => q.best === q.n).length >= 5 },
+    { id: 'debut', icon: '🎴', name: '第一次上場', how: '打完 1 場模擬對戰', ok: r => (r.battles || 0) >= 1 },
+    { id: 'win1', icon: '🏆', name: '首場勝利', how: '在模擬對戰打贏電腦', ok: r => (r.wins || 0) >= 1 },
+    { id: 'win3', icon: '👑', name: '對戰高手', how: '在模擬對戰打贏電腦 3 次', ok: r => (r.wins || 0) >= 3 },
+    { id: 'stars30', icon: '🌟', name: '星星收集家', how: '收集 30 顆星星', ok: () => totalStars() >= 30 },
+    { id: 'master', icon: '💎', name: '卡牌大師', how: '收集全部 33 顆星星', ok: () => totalStars() >= 33 }
+  ];
+  /* 檢查有沒有新徽章，有的話跳出通知 */
+  function checkBadges(silent) {
+    const r = records(); r.badges = r.badges || {};
+    const fresh = BADGES.filter(b => !r.badges[b.id] && b.ok(r));
+    if (!fresh.length) return [];
+    fresh.forEach(b => { r.badges[b.id] = Date.now(); });
+    saveRecords(r);
+    if (!silent) fresh.forEach((b, i) => setTimeout(() => badgeToast(b), 1800 + i * 2600));
+    return fresh;
+  }
+  function badgeToast(b) {
+    const t = document.createElement('div');
+    t.className = 'badge-toast'; t.setAttribute('role', 'status');
+    t.innerHTML = `<span class="bt-ico">${b.icon}</span><span><small>得到新徽章！</small><b>${b.name}</b></span><a href="${location.pathname.includes('/units/') ? '../' : ''}achievements.html">去看看</a>`;
+    document.body.appendChild(t); sfx('star');
+    requestAnimationFrame(() => t.classList.add('show'));
+    setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 600); }, 4200);
+  }
   const CHEAT_KEY = 'ptcg-camp-unlock-all';
   const cheatOn = () => { try { return localStorage.getItem(CHEAT_KEY) === '1'; } catch (e) { return false; } };
   function isUnlocked(i) { return cheatOn() || i === 0 || getStars(UNITS[i - 1].id) > 0; }
@@ -61,27 +98,37 @@ const PTCG = (() => {
   const tcls = t => 't-' + (TYPES[t] || 'colorless');
   function energy(t) {
     const label = t === '無色' ? '★' : t;
-    return `<span class="en ${tcls(t)}" title="${t}能量" aria-label="${t}能量">${label}</span>`;
+    return `<span class="en ${tcls(t)}" title="${t}能量" role="img" aria-label="${t}能量">${label}</span>`;
   }
 
   /* ---------- 卡片 ---------- */
   function card(d) {
+    /* 第 2 輪：統一卡片元件（金屬卡框＋卡面），稀有度：一般／ex／ACE SPEC */
+    const ace = d.ace ? '<span class="pc-ace">ACE SPEC</span>' : '';
     if (d.kind === 'energy') {
-      return `<div class="pcard energy ${tcls(d.type)}" aria-label="${d.type}能量卡">
-        <span class="pc-kind" data-part="kind">${d.special ? '特殊能量' : '基本能量'}</span>
-        <div class="pc-art">${d.type === '無色' ? '★' : d.type}</div>
-        <div class="pc-name" style="text-align:center">${d.name || d.type + '能量'}</div>
+      return `<div class="pcard energy ${tcls(d.type)} ${d.special ? 'r-special' : ''}" role="group" aria-label="${d.type}能量卡">
+        <div class="pc-body">
+          <span class="pc-kind" data-part="kind">${d.special ? '特殊能量' : '基本能量'}</span>
+          <div class="pc-art"><span class="orb">${d.type === '無色' ? '★' : d.type}</span></div>
+          <div class="pc-name" style="text-align:center">${d.name || d.type + '能量'}</div>
+        </div>
       </div>`;
     }
     if (d.kind === 'trainer') {
-      return `<div class="pcard trainer" aria-label="訓練家卡 ${d.name}">
-        <span class="pc-kind" data-part="kind">訓練家・${d.sub}</span>
-        <div class="pc-name" data-part="name">${d.name}</div>
-        <div class="pc-art" style="font-size:40px">${d.icon || '🎒'}</div>
-        <div class="pc-text" data-part="text">${d.text}</div>
-        ${d.rule ? `<div class="pc-rule" data-part="rule">${d.rule}</div>` : ''}
+      const sub = { '支援者': 'sup', '物品': 'item', '競技場': 'stad', '寶可夢道具': 'tool' }[d.sub] || 'item';
+      return `<div class="pcard trainer tr-${sub} ${d.ace ? 'r-ace' : ''}" role="group" aria-label="訓練家卡 ${d.name}">${ace}
+        <div class="pc-body">
+          <span class="pc-kind" data-part="kind">訓練家・${d.sub}</span>
+          <div class="pc-name" data-part="name">${d.name}</div>
+          <div class="pc-art"><span class="ico">${d.icon || '🎒'}</span></div>
+          <div class="pc-text" data-part="text">${d.text}</div>
+          ${d.rule ? `<div class="pc-rule" data-part="rule">${d.rule}</div>` : ''}
+        </div>
       </div>`;
     }
+    const isEx = d.ex || / ex$/.test(d.name || '');
+    const nm = String(d.name).replace(/ ex$/, ' <i class="exmark">ex</i>');
+    const nlen = String(d.name).replace(/ ex$/, '').length + (isEx ? 1.5 : 0);
     const atks = (d.attacks || []).map((a, i) => `
       <div class="pc-atk" data-part="atk${i}">
         <span class="cost" data-part="cost${i}">${a.cost.map(energy).join('')}</span>
@@ -89,18 +136,19 @@ const PTCG = (() => {
         <span class="dmg" data-part="dmg${i}">${a.dmg || ''}</span>
       </div>`).join('');
     const retreat = d.retreat ? Array(d.retreat).fill(energy('無色')).join('') : '—';
-    return `<div class="pcard ${tcls(d.type)}" aria-label="寶可夢卡 ${d.name}">
-      <div class="pc-top">
-        <span class="pc-stage" data-part="stage">${d.stage}</span>
-        <span class="pc-name" data-part="name">${d.name}</span>
-        <span class="pc-hp" data-part="hp">HP<b>${d.hp}</b>${energy(d.type)}</span>
-      </div>
-      <div class="pc-art ${d.type.length > 1 ? 'long' : ''}" data-part="type">${d.type}</div>
-      <div data-part="attacks">${atks}</div>
-      <div class="pc-foot">
-        <div data-part="weak">弱點<span class="v">${d.weak ? energy(d.weak) + '×2' : '—'}</span></div>
-        <div data-part="resist">抗性<span class="v">${d.resist ? energy(d.resist) + '-30' : '—'}</span></div>
-        <div data-part="retreat">撤退<span class="v">${retreat}</span></div>
+    return `<div class="pcard ${tcls(d.type)} ${isEx ? 'r-ex' : ''}" role="group" aria-label="寶可夢卡 ${d.name}">
+      <div class="pc-body">
+        <div class="pc-top">
+          <span class="pc-name ${nlen >= 5 ? 'nm-s' : nlen >= 4 ? 'nm-m' : ''}" data-part="name">${nm}</span>
+          <span class="pc-hp" data-part="hp">HP<b>${d.hp}</b>${energy(d.type)}</span>
+        </div>
+        <div class="pc-art ${d.type.length > 1 ? 'long' : ''}" data-part="type"><span class="pc-stage" data-part="stage">${d.stage}</span><span class="glyph">${d.type}</span></div>
+        <div class="pc-atks" data-part="attacks">${atks}</div>
+        <div class="pc-foot">
+          <div data-part="weak">弱點<span class="v">${d.weak ? energy(d.weak) + '×2' : '—'}</span></div>
+          <div data-part="resist">抗性<span class="v">${d.resist ? energy(d.resist) + '-30' : '—'}</span></div>
+          <div data-part="retreat">撤退<span class="v">${retreat}</span></div>
+        </div>
       </div>
     </div>`;
   }
@@ -198,9 +246,9 @@ const PTCG = (() => {
 
   /* 小卡（場地示意用） */
   function mini(d = {}) {
-    if (d.back) return `<div class="mini back" aria-label="蓋著的卡"></div>`;
+    if (d.back) return `<div class="mini back" role="img" aria-label="蓋著的卡"></div>`;
     const t = d.type || '無色';
-    return `<div class="mini ${d.trainer ? 'trainer' : ''} ${TYPES[t] ? 't-' + TYPES[t] : ''}" aria-label="${d.name}"><b>${d.name}</b>${d.trainer ? `<small>${d.trainer}</small>` : `<small>${t}${d.hp ? ' HP' + d.hp : ''}</small>`}</div>`;
+    return `<div class="mini ${d.trainer ? 'trainer' : ''} ${TYPES[t] ? 't-' + TYPES[t] : ''}" role="img" aria-label="${d.name}"><b>${d.name}</b>${d.trainer ? `<small>${d.trainer}</small>` : `<small>${t}${d.hp ? ' HP' + d.hp : ''}</small>`}</div>`;
   }
 
   /* ---------- 小遊戲元件 ---------- */
@@ -234,7 +282,7 @@ const PTCG = (() => {
     const msg = root.querySelector('.pg-msg'), list = root.querySelector('.og-done');
     root.querySelectorAll('.og-step').forEach(b => b.onclick = () => {
       if (+b.dataset.i === k) {
-        list.insertAdjacentHTML('beforeend', `<li class="pop-in">${steps[k]}</li>`); b.remove(); k++; sfx('card_place');
+        const hadF = b === document.activeElement; list.insertAdjacentHTML('beforeend', `<li class="pop-in">${steps[k]}</li>`); b.remove(); k++; sfx('card_place'); { const nx = root.querySelector('.og-step'); if (nx && hadF) nx.focus(); }
         msg.textContent = k < steps.length ? `對了！第 ${k + 1} 步呢？` : '順序完全正確！';
         if (k === steps.length) { sfx('level_clear'); confetti(60); done && done(); }
       } else { restart(b, 'shake'); sfx('wrong'); msg.textContent = '順序不對喔，再想想看～'; }
@@ -497,11 +545,12 @@ const PTCG = (() => {
       const n = questions.length;
       const stars = score === n ? 3 : score >= n - 1 ? 2 : score >= Math.ceil(n * .6) ? 1 : 0;
       setStars(unitId, stars);
+      record(r => { r.quiz = r.quiz || {}; const q = r.quiz[unitId] || { best: 0, n }; q.n = n; q.best = Math.max(q.best, score); r.quiz[unitId] = q; });
       const pill = document.querySelector('.star-pill');
       starPill(pill); if (pill) restart(pill, 'bump');
       root.innerHTML = `
         <div class="q-row" style="justify-content:center">${avatar(partner, 'big ' + (stars ? 'party' : 'comfort'))}<div class="q">答對 ${score} 題 / 共 ${n} 題</div></div>
-        <div class="result-stars" aria-label="得到 ${stars} 顆星">${[0, 1, 2].map(i =>
+        <div class="result-stars" role="img" aria-label="得到 ${stars} 顆星">${[0, 1, 2].map(i =>
           `<span class="${i < stars ? 'got' : ''}" style="animation-delay:${i * .25}s">★</span>`).join('')}</div>
         <p>${stars === 3 ? '太厲害了！你是卡牌小達人！' : stars > 0 ? '過關了！想拿滿 3 顆星可以再挑戰一次。' : '再複習一下上面的動畫，一定可以過關！'}</p>
         <div class="next-nav" style="justify-content:center">
@@ -558,13 +607,134 @@ const PTCG = (() => {
   const ME = document.currentScript && document.currentScript.src;
   if (typeof PTCGAudio !== 'undefined' && ME) {
     PTCGAudio.init(ME.replace(/js\/common\.js.*$/, 'audio/'));
-    document.addEventListener('DOMContentLoaded', () => {
+    const addSoundBtn = () => {
       const bar = document.querySelector('.topbar');
       if (bar && !bar.querySelector('.sound-btn')) { const w = document.createElement('span'); w.style.display = 'flex'; w.style.gap = '8px'; const pill = bar.querySelector('.star-pill'); if (pill) { pill.before(w); w.appendChild(pill); } else bar.appendChild(w); PTCGAudio.button(w); w.appendChild(w.querySelector('.sound-btn')); w.prepend(w.querySelector('.sound-btn')); }
+    };
+    if (document.querySelector('.topbar')) addSoundBtn();
+    document.addEventListener('DOMContentLoaded', () => {
+      addSoundBtn();
       const bgm = document.body.dataset.bgm; if (bgm !== 'none') PTCGAudio.music(bgm || 'bgm_grassland');
     });
     document.addEventListener('click', e => { const b = e.target.closest('.btn,.node,.gym-tag'); if (b && !b.classList.contains('sound-btn') && !b.closest('.pg-zone,.opt,.og-step,.yn-btns,.dots')) PTCGAudio.play('ui_click', { vol: .6 }); }, true);
   }
 
-  return { fighter, damage, setMax, paintHP, lunge, status, mark, coin, choiceGame, cheatButton, PARTNERS, avatar, mini, placeGame, orderGame, yesNoGame, sfx: (n, o) => sfx(n, o), get fast() { return FAST; }, twinkles, UNITS, AVAILABLE, getStars, setStars, totalStars, isUnlocked, energy, card, sparkle, confetti, restart, clouds: clouds2, starPill, Player, quiz };
+
+  /* ---------- 換頁轉場：夥伴光圈 ---------- */
+  const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function wipe(cover, x = innerWidth / 2, y = innerHeight / 2) {
+    let w = document.querySelector('.page-wipe');
+    if (!w) {
+      w = document.createElement('div'); w.className = 'page-wipe'; w.setAttribute('aria-hidden', 'true');
+      const keys = Object.keys(PARTNERS); w.innerHTML = '<div class="iris"></div>' + avatar(keys[Math.random() * keys.length | 0]);
+      document.body.appendChild(w);
+    }
+    const r = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+    w.style.setProperty('--wx', x + 'px'); w.style.setProperty('--wy', y + 'px'); w.style.setProperty('--ws', Math.ceil(r / 5 + 2));
+    if (cover) { void w.offsetWidth; w.classList.add('cover'); } else w.classList.remove('cover');
+    return w;
+  }
+  function go(href, x, y) {
+    if (REDUCE) { location.href = href; return; }
+    wipe(true, x, y); sfx('enter_gym', { vol: .7 });
+    try { sessionStorage.setItem('ptcg-wipe', '1'); } catch (e) { /* 略過 */ }
+    setTimeout(() => { location.href = href; }, 520);
+  }
+  document.addEventListener('click', e => {
+    const a = e.target.closest('a[href]');
+    if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || a.target === '_blank') return;
+    const href = a.getAttribute('href');
+    if (!href || href.startsWith('#') || /^(https?:|mailto:)/.test(href)) return;
+    e.preventDefault(); go(a.href, e.clientX || innerWidth / 2, e.clientY || innerHeight / 2);
+  });
+  /* 進場：從光圈中打開 */
+  document.addEventListener('DOMContentLoaded', () => {
+    let came = false; try { came = sessionStorage.getItem('ptcg-wipe') === '1'; sessionStorage.removeItem('ptcg-wipe'); } catch (e) { /* 略過 */ }
+    if (came && !REDUCE) { const w = wipe(true); w.querySelector('.iris').style.transition = 'none'; requestAnimationFrame(() => requestAnimationFrame(() => { w.querySelector('.iris').style.transition = ''; wipe(false); })); }
+    /* 頁尾聲明 */
+    const wrap = document.querySelector('.wrap');
+    if (wrap && !document.querySelector('.site-foot') && !document.body.dataset.nofoot) {
+      const root = ME && /\/units\//.test(location.pathname) ? '../' : '';
+      wrap.insertAdjacentHTML('beforeend', `<footer class="site-foot">非官方粉絲教學網站，與任天堂、Creatures、GAME FREAK、寶可夢公司無關。寶可夢名稱與規則之權利屬於各權利人。<br><a href="${root}about.html">關於本站・給家長與老師</a></footer>`);
+    }
+  });
+  addEventListener('pageshow', e => { if (e.persisted) { const w = document.querySelector('.page-wipe'); w && w.classList.remove('cover'); } });
+
+
+  /* ---------- 第一次進站引導（夥伴棉棉帶路） ---------- */
+  function guide(force) {
+    const r = records();
+    if (r.guide && !force) return;
+    if (document.querySelector('.guide')) return;
+    const STEPS = [
+      { t: '嗨！我是棉棉 ☁️', p: '歡迎來到卡牌訓練營！我會陪你一關一關學會寶可夢卡牌遊戲。花 20 秒認識一下這裡吧！' },
+      { sel: '#world', pad: -60, t: '轉一轉、看一看', p: '在畫面上拖曳可以轉動視角，用滾輪或兩根手指可以放大縮小。' },
+      { sel: '.gym-tag.current', pad: 10, t: '發光的道館就是下一關', p: '點它就能進去上課：先看動畫，再玩小遊戲，最後回答測驗。' },
+      { sel: '.star-pill', pad: 8, t: '答題拿星星', p: '每關的測驗答對越多，星星越多，最多 3 顆。過關後下一關就會打開！' },
+      { sel: '#achBtn', pad: 8, t: '你的成就', p: '這裡可以看收集到的星星，還有 11 個徽章等你來拿。' },
+      { sel: '.sound-btn', pad: 8, t: '音樂開關', p: '想安靜的時候，按這裡就能關掉音樂和音效。準備好了嗎？出發吧！' }
+    ];
+    let k = 0;
+    const root = document.createElement('div');
+    root.className = 'guide';
+    root.innerHTML = `<div class="guide-spot none"></div>
+      <div class="guide-card" role="dialog" aria-modal="true" aria-labelledby="gT" aria-describedby="gP">
+        ${avatar('cloud', 'enter')}
+        <div><h2 id="gT"></h2><p id="gP"></p></div>
+        <div class="row"><span class="dots">${STEPS.map(() => '<i></i>').join('')}</span>
+          <button class="skip" type="button">略過</button><button class="btn sun nx" type="button">下一步</button></div>
+      </div>`;
+    document.body.appendChild(root);
+    const spot = root.querySelector('.guide-spot'), card = root.querySelector('.guide-card');
+    const close = () => {
+      record(x => { x.guide = 1; });
+      root.remove(); clearInterval(tick); removeEventListener('resize', place); document.removeEventListener('keydown', key, true);
+      const back = document.querySelector('.gym-tag.current'); back && back.focus && back.focus();
+    };
+    const place = () => {
+      const S = STEPS[k], el = S.sel && document.querySelector(S.sel);
+      const W = innerWidth, H = innerHeight, cw = card.offsetWidth, ch = card.offsetHeight;
+      let r0 = el && el.offsetParent !== null ? el.getBoundingClientRect() : null;
+      if (r0 && (r0.width === 0 || r0.bottom < 0 || r0.top > H)) r0 = null;
+      if (!r0) {
+        spot.classList.add('none'); Object.assign(spot.style, { left: W / 2 + 'px', top: H / 2 + 'px', width: 0, height: 0 });
+        Object.assign(card.style, { left: (W - cw) / 2 + 'px', top: (H - ch) / 2 + 'px' }); return;
+      }
+      const pd = S.pad || 0;
+      const x = Math.max(6, r0.left - pd), y = Math.max(6, r0.top - pd);
+      const w = Math.min(W - 12, r0.width + pd * 2), h = Math.min(H - 12, r0.height + pd * 2);
+      spot.classList.remove('none');
+      Object.assign(spot.style, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px', borderRadius: (h > 200 ? 28 : Math.min(22, h / 2)) + 'px' });
+      let top = y + h + 14 + ch < H ? y + h + 14 : y - ch - 14;
+      if (top < 6 || h > H * .6) top = (H - ch) / 2;
+      const left = Math.min(W - cw - 12, Math.max(12, x + w / 2 - cw / 2));
+      Object.assign(card.style, { left: left + 'px', top: top + 'px' });
+    };
+    const show = () => {
+      const S = STEPS[k];
+      root.querySelector('#gT').textContent = S.t; root.querySelector('#gP').textContent = S.p;
+      root.querySelectorAll('.dots i').forEach((d, i) => d.classList.toggle('on', i === k));
+      root.querySelector('.nx').textContent = k === STEPS.length - 1 ? '出發！' : '下一步';
+      place(); sfx(k ? 'ui_click' : 'star');
+      root.querySelector('.nx').focus();
+    };
+    const key = e => {
+      if (e.key === 'Escape') { e.preventDefault(); close(); }
+      if (e.key === 'Tab') {   /* 鍵盤焦點留在引導卡片裡 */
+        const f = [...card.querySelectorAll('button')], i = f.indexOf(document.activeElement);
+        e.preventDefault(); f[(i + (e.shiftKey ? -1 : 1) + f.length) % f.length].focus();
+      }
+    };
+    root.querySelector('.nx').onclick = () => { if (++k >= STEPS.length) { close(); confetti(60); } else show(); };
+    root.querySelector('.skip').onclick = close;
+    document.addEventListener('keydown', key, true);
+    addEventListener('resize', place);
+    const tick = setInterval(place, 400);   /* 3D 鏡頭移動時，聚光燈跟著道館 */
+    show();
+  }
+
+  /* 舊玩家：已經達成的徽章直接補上，不跳通知 */
+  try { checkBadges(true); } catch (e) { /* 略過 */ }
+
+  return { guide, records, record, BADGES, checkBadges, go, fighter, damage, setMax, paintHP, lunge, status, mark, coin, choiceGame, cheatButton, PARTNERS, avatar, mini, placeGame, orderGame, yesNoGame, sfx: (n, o) => sfx(n, o), get fast() { return FAST; }, twinkles, UNITS, AVAILABLE, getStars, setStars, totalStars, isUnlocked, energy, card, sparkle, confetti, restart, clouds: clouds2, starPill, Player, quiz };
 })();

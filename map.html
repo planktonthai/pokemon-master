@@ -3,15 +3,35 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- seo -->
+<meta name="description" content="給小學 3～6 年級的寶可夢卡牌遊戲教學：3D 冒險地圖、動畫教學、互動小遊戲和模擬對戰，從新手一路學到高手。">
+<meta name="theme-color" content="#5BA8F5">
+<link rel="icon" type="image/svg+xml" href="assets/img/icon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/img/icon-32.png">
+<link rel="apple-touch-icon" href="assets/img/icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="zh_TW">
+<meta property="og:site_name" content="寶可夢卡牌訓練營">
+<meta property="og:title" content="寶可夢卡牌訓練營">
+<meta property="og:description" content="給小學 3～6 年級的寶可夢卡牌遊戲教學：3D 冒險地圖、動畫教學、互動小遊戲和模擬對戰，從新手一路學到高手。">
+<meta property="og:image" content="https://planktonthai.github.io/pokemon-master/assets/img/og.png">
+<meta property="og:url" content="https://planktonthai.github.io/pokemon-master/map.html">
+<link rel="canonical" href="https://planktonthai.github.io/pokemon-master/map.html">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@500;900&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@500;900&display=swap"></noscript>
+<!-- /seo -->
 <title>寶可夢卡牌訓練營</title>
-<meta name="description" content="給小學生的寶可夢卡牌遊戲教學，從新手到高手一步步學。">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🃏</text></svg>">
-<link rel="stylesheet" href="assets/css/style.css">
+<link rel="stylesheet" href="assets/css/style.min.css">
 </head>
 <body>
 <div class="wrap">
   <div class="topbar">
-    <span></span>
+    <span style="display:flex;gap:8px"><a class="btn" href="about.html" aria-label="關於本站" title="關於本站・給家長與老師">ℹ️ 關於</a><a class="btn" href="achievements.html" aria-label="我的成就" title="我的成就：星星與徽章">🏅 成就</a></span>
     <span class="star-pill" aria-live="polite"></span>
   </div>
 
@@ -45,8 +65,8 @@
 </div>
 <div class="toast" id="toast" role="status"></div>
 
-<script src="assets/vendor/three.min.js"></script>
-<script src="assets/js/fx3d.js"></script>
+<script src="assets/vendor/three.min.js" defer></script>
+<script src="assets/js/fx3d.js" defer></script>
 <script src="assets/js/audio.js"></script>
 <script src="assets/js/common.js"></script>
 <script>
@@ -59,14 +79,15 @@
   PTCG.twinkles(document.querySelector('.hero'), 8);
 
   /* 3D 主視覺：兩張閃卡（點卡片會翻面） */
-  if (PTCG3D.ok) {
+  /* 3D 函式庫延後載入：頁面先畫出來，3D 主視覺再補上 */
+  document.addEventListener('DOMContentLoaded', () => { if (typeof PTCG3D === 'undefined' || !PTCG3D.ok) return;
     const go = () => PTCG3D.hero(document.getElementById('hero3d'), [
       { stage: '基礎', name: '皮卡丘', hp: 60, type: '雷', attacks: [{ cost: ['雷'], name: '電擊', dmg: 20 }, { cost: ['雷', '無色'], name: '電球', dmg: 50 }], weak: '鬥', retreat: 1 },
       { stage: '基礎', name: '小火龍', hp: 70, type: '火', attacks: [{ cost: ['火'], name: '火花', dmg: 30 }, { cost: ['火', '無色'], name: '噴射火焰', dmg: 60 }], weak: '水', retreat: 1 }
     ]);
     /* 等字型載入完再畫卡面，最多等 1.5 秒 */
     Promise.race([document.fonts ? document.fonts.ready : Promise.resolve(), new Promise(r => setTimeout(r, 1500))]).then(go);
-  }
+  });
   const t = document.getElementById('title');
   t.innerHTML = [...'寶可夢卡牌訓練營'].map((c, i) =>
     `<span aria-hidden="true" style="--i:${i}">${c}</span>`).join('');
@@ -88,7 +109,7 @@
     el.innerHTML = (el.classList.contains('current') ? '<span class="rays" aria-hidden="true"></span>' : '') + `
       <span class="disc">${unlocked ? u.no : '🔒'}</span>
       <span class="label">${u.name}</span>
-      <span class="stars" aria-label="${stars} 顆星">${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}</span>`;
+      <span class="stars" role="img" aria-label="${stars} 顆星">${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}</span>`;
     if (el.tagName === 'BUTTON') {
       el.onclick = () => toast(!unlocked ? `先完成上一關，就能打開「${u.name}」！` : `「${u.name}」正在製作中，敬請期待！`);
     }

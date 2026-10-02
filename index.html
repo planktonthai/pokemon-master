@@ -3,10 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- seo -->
+<meta name="description" content="給小學 3～6 年級的寶可夢卡牌遊戲教學：3D 冒險地圖、動畫教學、互動小遊戲和模擬對戰，從新手一路學到高手。">
+<meta name="theme-color" content="#5BA8F5">
+<link rel="icon" type="image/svg+xml" href="assets/img/icon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/img/icon-32.png">
+<link rel="apple-touch-icon" href="assets/img/icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="zh_TW">
+<meta property="og:site_name" content="寶可夢卡牌訓練營">
+<meta property="og:title" content="寶可夢卡牌訓練營">
+<meta property="og:description" content="給小學 3～6 年級的寶可夢卡牌遊戲教學：3D 冒險地圖、動畫教學、互動小遊戲和模擬對戰，從新手一路學到高手。">
+<meta property="og:image" content="https://planktonthai.github.io/pokemon-master/assets/img/og.png">
+<meta property="og:url" content="https://planktonthai.github.io/pokemon-master/">
+<link rel="canonical" href="https://planktonthai.github.io/pokemon-master/">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@500;900&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@500;900&display=swap"></noscript>
+<!-- /seo -->
 <title>寶可夢卡牌訓練營</title>
-<meta name="description" content="給小學生的寶可夢卡牌遊戲教學，從新手到高手一步步學。">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏡</text></svg>">
-<link rel="stylesheet" href="assets/css/style.css">
+<link rel="stylesheet" href="assets/css/style.min.css">
 <style>
   html,body{height:100%;overflow:hidden;background:#BFE3FF}
   #world{position:fixed;inset:0;touch-action:none}
@@ -56,16 +76,16 @@
   .loading .spin{width:64px;height:64px;border-radius:50%;border:6px solid #fff;border-top-color:var(--sun);animation:spin 1s linear infinite}
   .loading p{font-size:20px;margin:0}
   .fade{position:fixed;inset:0;z-index:25;background:#fff;opacity:0;pointer-events:none;transition:opacity .6s}
-  @media (max-width:560px){ .zone-pill{font-size:18px} .gym-tag{font-size:15px} .hint{font-size:13px} }
+  @media (max-width:560px){ .zone-pill{font-size:15px;padding:4px 10px;white-space:nowrap} .hud .btn{padding:6px 10px} .gym-tag{font-size:15px} .hint{font-size:13px} }
 </style>
 </head>
 <body>
-<div id="world" aria-label="新手草原 3D 村莊地圖"></div>
+<div id="world" role="img" aria-label="新手草原 3D 村莊地圖"></div>
 <div id="tags"></div>
 
 <div class="hud topbar">
   <div style="display:flex;gap:10px;align-items:center">
-    <a class="btn" href="map.html" aria-label="平面地圖" title="平面地圖">🗺</a>
+    <a class="btn" href="map.html" aria-label="平面地圖" title="平面地圖">🗺</a><a class="btn" href="about.html" aria-label="關於本站" title="關於本站・給家長與老師">ℹ️</a><a class="btn" id="achBtn" href="achievements.html" aria-label="我的成就" title="我的成就：星星與徽章">🏅</a>
     <span class="zone-pill" id="zonePill">🌱 新手草原</span>
   </div>
   <span class="star-pill" aria-live="polite"></span>
@@ -80,6 +100,8 @@
 <div class="loading" id="loading"><div class="spin"></div><p>訓練營世界建造中…</p></div>
 
 <script>
+  /* 沒有 WebGL 的裝置：先改去平面地圖，不下載 3D 程式 */
+  (function(){ try { var c=document.createElement('canvas'); if(!(c.getContext('webgl2')||c.getContext('webgl'))) location.replace('map.html'); } catch(e){ location.replace('map.html'); } })();
   /* 載入檢查：資源缺少或出錯時顯示說明，不要一直轉圈 */
   (function(){
     function fail(msg){
@@ -94,13 +116,13 @@
     setTimeout(function(){ if(document.getElementById('loading') && !window.__villageOK) fail('等太久了。請確認已經解壓縮整個資料夾，，再打開 index.html。'); }, 20000);
   })();
 </script>
-<script src="assets/vendor/three.min.js"></script>
-<script src="assets/vendor/three-post.js"></script>
-<script src="assets/js/partners3d.js"></script>
-<script src="assets/js/audio.js"></script>
-<script src="assets/js/common.js"></script>
+<script src="assets/vendor/three.min.js" defer></script>
+<script src="assets/vendor/three-post.js" defer></script>
+<script src="assets/js/partners3d.js" defer></script>
+<script src="assets/js/audio.js" defer></script>
+<script src="assets/js/common.js" defer></script>
 <script>
-(() => {
+addEventListener('DOMContentLoaded', () => {   /* 程式檔延後載入，先畫出載入畫面 */
   if (typeof THREE === 'undefined' || typeof PTCG === 'undefined') { window.__villageFail && __villageFail('找不到網站的程式檔。請先把 zip「全部解壓縮」，再打開資料夾裡的 prototype/village.html；，再打開 index.html。'); return; }
   if (!document.createElement('canvas').getContext('webgl2') && !document.createElement('canvas').getContext('webgl')) { location.replace('map.html'); return; }
   const T = THREE;
@@ -804,7 +826,7 @@
 
     /* 目前所在區域 */
     let zn = 'grass', zd = 1e9; for (const k in ZONE_C) { const d = cam.target.distanceTo(ZONE_C[k]); if (d < zd) { zd = d; zn = k; } }
-    if (zonePill.dataset.z !== zn) { zonePill.dataset.z = zn; zonePill.className = 'zone-pill ' + zn; zonePill.textContent = { grass: '🌱 新手草原', canyon: '🏜️ 進階山谷', volcano: '🌋 高手火山' }[zn]; if (typeof PTCGAudio !== 'undefined') PTCGAudio.music(zn === 'canyon' ? 'bgm_canyon' : 'bgm_grassland'); }
+    if (zonePill.dataset.z !== zn) { zonePill.dataset.z = zn; zonePill.className = 'zone-pill ' + zn; zonePill.textContent = { grass: '🌱 新手草原', canyon: '🏜️ 進階山谷', volcano: '🌋 高手火山' }[zn]; if (typeof PTCGAudio !== 'undefined') PTCGAudio.music({ canyon: 'bgm_canyon', volcano: 'bgm_volcano' }[zn] || 'bgm_grassland'); }
     /* 標籤位置（重疊時往上錯開） */
     const placed = [];
     GYMS.map(G => { v.set(G.pos.x, G.arena ? 12 : 9.6, G.pos.z).project(camera); return { G, x: (v.x * .5 + .5) * innerWidth, y: (-v.y * .5 + .5) * innerHeight, z: v.z }; })
@@ -830,9 +852,9 @@
       if (frames > 20) slowSum += dt;
       if (frames === 110) { checked = true; if (slowSum / 90 > .034) { setQuality('low'); toast('已自動切換為省電畫質'); } }
     }
-    if (frames === 3) { window.__villageOK = true; const L = document.getElementById('loading'); L.style.opacity = 0; setTimeout(() => L.remove(), 800); }
+    if (frames === 3) { window.__villageOK = true; const L = document.getElementById('loading'); L.style.opacity = 0; setTimeout(() => L.remove(), 800); setTimeout(() => PTCG.guide(/[?&]guide=1/.test(location.search)), 1100); }
   });
-})();
+});
 </script>
 </body>
 </html>
