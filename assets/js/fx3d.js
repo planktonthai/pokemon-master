@@ -314,6 +314,9 @@ const PTCG3D = (() => {
     new IntersectionObserver(es => { visible = es[0].isIntersecting; }).observe(host);
     const clock = new THREE.Clock();
     let auto = 0;
+    /* 看門狗：連續 3 格畫面間隔都超過 250 毫秒（沒有硬體加速），就停止動畫，保留靜態畫面 */
+    let slow = 0, lastF = 0;
+    const timed = fn => { const now = performance.now(); if (lastF) slow = now - lastF > 250 ? slow + 1 : 0; lastF = now; fn(); if (slow >= 3) { renderer.setAnimationLoop(null); window.__ptcgSlow3D = true; } };
     renderer.setAnimationLoop(() => {
       if (!visible) return;
       const t = clock.getElapsedTime();
@@ -336,7 +339,7 @@ const PTCG3D = (() => {
       });
       pts.rotation.y = t * .02;
       pts.material.opacity = .7 + Math.sin(t * 3) * .3;
-      renderer.render(scene, camera);
+      timed(() => renderer.render(scene, camera));
     });
   }
 

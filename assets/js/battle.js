@@ -1,8 +1,10 @@
 /* 寶可夢卡牌訓練營：模擬對戰（接近正式規則，6 張獎賞卡） */
 (() => {
   const $ = s => document.querySelector(s);
-  const sleep = ms => new Promise(r => setTimeout(r, ms));
-  const sfx = (n, o) => PTCG.sfx(n, o);
+  const QS = new URLSearchParams(location.search);
+  let SIM = false;   /* 自動測試：電腦對電腦 */
+  const sleep = ms => SIM ? new Promise(r => setTimeout(r, 0)) : new Promise(r => setTimeout(r, ms));
+  const sfx = (n, o) => { if (!SIM) PTCG.sfx(n, o); };
 
   /* ================= 卡片資料 ================= */
   const P = (name, stage, hp, type, weak, retreat, attacks, extra = {}) => Object.assign({ kind: 'pokemon', name, stage, hp, type, weak, retreat, attacks }, extra);
@@ -19,6 +21,8 @@
     bulbasaur: P('妙蛙種子', '基礎', 70, '草', '火', 2, [{ name: '催眠粉', cost: ['草'], dmg: 10, fx: 'sleep', text: '對手陷入睡眠' }, { name: '藤鞭', cost: ['草', '無色'], dmg: 40 }]),
     ivysaur: P('妙蛙草', '1階進化', 100, '草', '火', 2, [{ name: '毒粉', cost: ['草'], dmg: 20, fx: 'poison', text: '對手陷入中毒' }, { name: '飛葉快刀', cost: ['草', '無色'], dmg: 60 }], { from: '妙蛙種子' }),
     venusaur: P('妙蛙花', '2階進化', 190, '草', '火', 3, [{ name: '陽光烈焰', cost: ['草', '草', '無色'], dmg: 150 }], { from: '妙蛙草' }),
+    megaCharizard: P('超級噴火龍 ex', '2階進化', 330, '火', '水', 3, [{ name: '灼熱旋風', cost: ['火'], dmg: 60, fx: 'burn', text: '對手陷入灼傷' }, { name: '超級爆炎', cost: ['火', '火', '無色'], dmg: 220 }], { from: '火恐龍', ex: true, mega: true }),
+    megaBlastoise: P('超級水箭龜 ex', '2階進化', 330, '水', '雷', 3, [{ name: '激流', cost: ['水'], dmg: 60 }, { name: '超級加農炮', cost: ['水', '水', '無色'], dmg: 220 }], { from: '卡咪龜', ex: true, mega: true }),
     lapras: P('拉普拉斯 ex', '基礎', 210, '水', '雷', 2, [{ name: '冰凍光束', cost: ['水', '水', '無色'], dmg: 120 }], { ex: true }),
     fire: { kind: 'energy', type: '火', name: '火能量' }, lightning: { kind: 'energy', type: '雷', name: '雷能量' },
     water: { kind: 'energy', type: '水', name: '水能量' }, grass: { kind: 'energy', type: '草', name: '草能量' },
@@ -33,6 +37,24 @@
     fireThunder: { name: '🔥⚡ 火焰雷電隊', list: { charmander: 4, charmeleon: 3, charizard: 2, pikachu: 4, raichu: 3, manectric: 1, ball: 4, potion: 3, switchc: 3, candy: 2, research: 4, boss: 2, fire: 13, lightning: 12 } },
     waterLeaf: { name: '💧🌿 水流森林隊', list: { squirtle: 4, wartortle: 3, blastoise: 2, bulbasaur: 4, ivysaur: 3, venusaur: 1, lapras: 1, ball: 4, potion: 3, switchc: 3, candy: 2, research: 4, boss: 2, water: 12, grass: 12 } }
   };
+  /* 電腦強度：D1 見習生 ～ D5 終極魔王 */
+  const LEVELS = {
+    1: { title: 'D1 見習生', skipEnergy: .5, randomTarget: true, randomAtk: 1, attackSkip: .2, evolve: .5, items: ['精靈球'], supporters: [], smartSwitch: false, protect: false, smartEnergy: false, researchAt: 0, exInDeck: 0 },
+    2: { title: 'D2 訓練家', skipEnergy: .25, randomTarget: false, randomAtk: .7, attackSkip: 0, evolve: .8, items: ['精靈球'], supporters: ['博士的研究'], smartSwitch: false, protect: false, smartEnergy: false, researchAt: 3, exInDeck: 0 },
+    3: { title: 'D3 道館館主', skipEnergy: 0, randomTarget: false, randomAtk: 0, attackSkip: 0, evolve: 1, items: ['精靈球', '神奇糖果', '好傷藥', '寶可夢交替'], supporters: ['博士的研究', '老大的指令'], smartSwitch: true, protect: false, smartEnergy: false, researchAt: 4, exInDeck: 1 },
+    4: { title: 'D4 四天王', skipEnergy: 0, randomTarget: false, randomAtk: 0, attackSkip: 0, evolve: 1, items: ['精靈球', '神奇糖果', '好傷藥', '寶可夢交替'], supporters: ['博士的研究', '老大的指令'], smartSwitch: true, protect: true, smartEnergy: true, researchAt: 5, exInDeck: 1, aggroSwitch: true, consistent: true, bonusDraw: 2 },
+    5: { title: 'D5 終極魔王', skipEnergy: 0, randomTarget: false, randomAtk: 0, attackSkip: 0, evolve: 1, items: ['精靈球', '神奇糖果', '好傷藥', '寶可夢交替'], supporters: ['博士的研究', '老大的指令'], smartSwitch: true, protect: true, smartEnergy: true, researchAt: 5, exInDeck: 2, mega: true, safeStart: true, aggroSwitch: true, consistent: true, bonusDraw: 3 }
+  };
+  /* 依強度調整電腦牌組（總數維持 60 張） */
+  function deckList(key, lv) {
+    const L = Object.assign({}, DECKS[key].list), cfg = LEVELS[lv] || LEVELS[3];
+    const fire = key === 'fireThunder', ex = fire ? 'manectric' : 'lapras', filler = fire ? 'lightning' : 'water';
+    L[ex] = cfg.exInDeck; L[filler] += 1 - cfg.exInDeck;
+    if (cfg.exInDeck === 2) { const basic = fire ? 'pikachu' : 'bulbasaur'; L[basic] -= 1; L[filler] += 1; }
+    if (cfg.consistent) { L.potion -= 2; L.ball += 1; L.research += 1; }
+    if (cfg.mega) { const s2 = fire ? 'charizard' : 'blastoise', mg = fire ? 'megaCharizard' : 'megaBlastoise'; L[mg] = L[s2]; L[s2] = 0; L.candy += 1; L.switchc -= 1; }
+    return L;
+  }
   const TYPES = { '草': 'grass', '火': 'fire', '水': 'water', '雷': 'lightning', '鬥': 'fighting', '無色': 'colorless' };
   const ATK_SFX = { '火': 'attack_fire', '水': 'attack_water', '雷': 'attack_zap' };
 
@@ -41,8 +63,8 @@
   const G = { turn: 0, cur: null, over: false, busy: false, P: {} };
   const other = s => s === 'me' ? 'ai' : 'me';
   const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
-  function makeDeck(key) { const d = []; for (const [id, n] of Object.entries(DECKS[key].list)) for (let i = 0; i < n; i++) d.push({ uid: ++uid, id, def: DEFS[id] }); return shuffle(d); }
-  function player(key, deckKey) { return { key, deckKey, deck: makeDeck(deckKey), hand: [], discard: [], prizes: [], active: null, bench: [], turns: 0, energyUsed: false, supporterUsed: false, retreated: false }; }
+  function makeDeck(key, lv) { const d = []; for (const [id, n] of Object.entries(lv ? deckList(key, lv) : DECKS[key].list)) for (let i = 0; i < n; i++) d.push({ uid: ++uid, id, def: DEFS[id] }); return shuffle(d); }
+  function player(key, deckKey, lv) { return { key, deckKey, lv, deck: makeDeck(deckKey, lv), hand: [], discard: [], prizes: [], active: null, bench: [], turns: 0, energyUsed: false, supporterUsed: false, retreated: false }; }
   function mon(card) { return { uid: card.uid, cards: [card], def: card.def, energies: [], dmg: 0, status: null, poison: false, burn: false, playedTurn: G.turn, evolvedTurn: -1 }; }
   const hpLeft = m => m.def.hp - m.dmg;
   const inPlay = p => [p.active, ...p.bench].filter(Boolean);
@@ -99,87 +121,43 @@
 
   /* ================= 畫面 ================= */
   const en = t => PTCG.energy(t);
-  const nmHTML = n => String(n).replace(/ ex$/, ' <i class="exmark">ex</i>');
   function bcard(m, where) {
     if (!m) return `<div class="bc empty">${where === 'active' ? '戰鬥場' : ''}</div>`;
-    const d = m.def, left = hpLeft(m);
-    return `<div class="bc t-${TYPES[d.type]} ${d.ex ? 'ex' : ''} ${m.status ? 'st-' + m.status : ''}" data-uid="${m.uid}" role="button" tabindex="0" aria-label="${d.name}，剩 ${left} HP">
-      <div class="in">
-        <div class="bc-stg">${d.stage}</div><div class="bc-name">${nmHTML(d.name)}</div>
-        <div class="bc-art">${d.type === '無色' ? '★' : d.type}</div>
-        <div class="bc-hp"><i style="width:${left / d.hp * 100}%" class="${left / d.hp <= .35 ? 'low' : ''}"></i><span>${left}/${d.hp}</span></div>
-        <div class="bc-en">${m.energies.map(en).join('')}</div>
-      </div>
+    const d = m.def, left = Math.max(0, hpLeft(m));
+    return `<div class="bc t-${TYPES[d.type]} ${d.ex ? 'ex' : ''} ${d.mega ? 'mega' : ''} ${m.status ? 'st-' + m.status : ''}" data-uid="${m.uid}" tabindex="0" role="button" aria-label="${d.name}，HP 剩 ${left} / ${d.hp}${m.energies.length ? '，能量 ' + m.energies.join('、') : ''}${m.status ? '，' + ({ sleep: '睡眠', para: '麻痺', conf: '混亂' })[m.status] : ''}">
+      <div class="bc-top"><span class="stg">${d.stage}</span><b>${d.name}</b></div>
+      <div class="bc-art">${d.type === '無色' ? '★' : d.type}</div>
+      <div class="bc-hp"><i style="width:${left / d.hp * 100}%" class="${left / d.hp <= .35 ? 'low' : ''}"></i><span>${left}/${d.hp}</span></div>
+      <div class="bc-en">${m.energies.map(en).join('')}</div>
       ${m.dmg ? `<div class="bc-dmg">${m.dmg}</div>` : ''}
       <div class="bc-mk">${m.poison ? '<span class="mk poison">毒</span>' : ''}${m.burn ? '<span class="mk burn">燒</span>' : ''}${m.status ? `<span class="mk st">${{ sleep: '😴', para: '⚡', conf: '😵' }[m.status]}</span>` : ''}</div>
     </div>`;
   }
   function hcard(c) {
     const d = c.def;
-    if (d.kind === 'energy') return `<button class="hc energy t-${TYPES[d.type]}" data-uid="${c.uid}" aria-label="${d.name}"><span class="in"><span class="k">基本能量</span><b>${d.type}</b></span></button>`;
-    if (d.kind === 'trainer') return `<button class="hc trainer ${d.sub === '支援者' ? 'sup' : ''}" data-uid="${c.uid}" aria-label="${d.sub} ${d.name}"><span class="in"><span class="k">${d.sub}</span><b>${d.icon}</b><small>${d.name}</small></span></button>`;
-    return `<button class="hc t-${TYPES[d.type]} ${d.ex ? 'ex' : ''}" data-uid="${c.uid}" aria-label="${d.stage} ${d.name} HP ${d.hp}"><span class="in"><span class="k">${d.stage}</span><small>${nmHTML(d.name)}</small><b>${d.type}</b><span class="k">HP ${d.hp}</span></span></button>`;
-  }
-
-  /* ---- 卡片飛行動畫：記錄「哪張卡要飛去哪裡」，畫面更新後播放 ---- */
-  const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const FX = [];
-  const sideOf = p => p === G.P.me ? 'me' : 'ai';
-  function queueFly(p, card, to) { if (!REDUCE) FX.push({ side: sideOf(p), card, to }); }
-  let lastHand = new Map();   /* uid → 手牌位置 */
-  function ghost(card) {
-    const g = document.createElement('div'); g.className = 'fly';
-    g.innerHTML = hcard(card).replace('<button', '<div').replace(/<\/button>$/, '</div>');
-    return g;
-  }
-  function playFX() {
-    while (FX.length) {
-      const f = FX.shift();
-      let from = f.side === 'me' ? lastHand.get(f.card.uid) : null;
-      if (!from) { const src = $(`#${f.side} .who .tag`); from = src && src.getBoundingClientRect(); }
-      let tgt = f.to.mon ? $(`#${f.side} .bc[data-uid="${f.to.mon}"]`) : $(`#${f.side} .pile.discard`);
-      if (!tgt || !tgt.offsetParent) tgt = $(`#${f.side} .who .tag`);
-      if (!from || !tgt) continue;
-      const to = tgt.getBoundingClientRect();
-      const g = ghost(f.card); document.body.appendChild(g);
-      const card = g.firstElementChild; card.style.width = '84px';
-      const sx = from.left, sy = from.top, s0 = from.width / 84 || .6;
-      const ex = to.left + to.width / 2 - 42 * .7, ey = to.top + to.height / 2 - 59 * .7;
-      const hideT = f.to.place && tgt.classList.contains('bc');
-      if (hideT) tgt.style.opacity = 0;
-      const anim = g.animate([
-        { transform: `translate(${sx}px,${sy}px) scale(${s0}) rotate(0deg)`, opacity: 1 },
-        { transform: `translate(${(sx + ex) / 2}px,${Math.min(sy, ey) - 70}px) scale(${Math.max(s0, .9)}) rotate(${f.side === 'me' ? -8 : 8}deg)`, opacity: 1, offset: .5 },
-        { transform: `translate(${ex}px,${ey}px) scale(.7) rotate(0deg)`, opacity: f.to.mon ? .2 : .9 }
-      ], { duration: 560, easing: 'cubic-bezier(.22,1,.36,1)' });
-      anim.onfinish = () => { g.remove(); if (hideT) tgt.style.opacity = ''; if (tgt.classList.contains('bc')) PTCG.restart(tgt, 'arrive'); };
-    }
+    if (d.kind === 'energy') return `<button class="hc energy t-${TYPES[d.type]}" data-uid="${c.uid}"><span class="k">能量</span><b class="big">${d.type}</b></button>`;
+    if (d.kind === 'trainer') return `<button class="hc trainer ${d.sub === '支援者' ? 'sup' : ''}" data-uid="${c.uid}"><span class="k">${d.sub}</span><b>${d.icon}</b><small>${d.name}</small></button>`;
+    return `<button class="hc t-${TYPES[d.type]} ${d.ex ? 'ex' : ''}" data-uid="${c.uid}"><span class="k">${d.stage}</span><small>${d.name}</small><b>${d.type}</b><span class="k">HP ${d.hp}</span></button>`;
   }
   function render() {
-    /* 先記住目前手牌的位置，給飛行動畫當起點 */
-    lastHand = new Map([...document.querySelectorAll('#hand .hc')].map(e => [+e.dataset.uid, e.getBoundingClientRect()]));
+    if (SIM) return;
     for (const s of ['me', 'ai']) {
       const p = G.P[s], root = $('#' + s);
       root.querySelector('.active').innerHTML = bcard(p.active, 'active');
       root.querySelector('.bench').innerHTML = [0, 1, 2, 3, 4].map(i => bcard(p.bench[i], 'bench')).join('');
-      const pz = n => Array.from({ length: 6 }, (_, i) => `<span class="pz ${i < n ? '' : 'gone'}"></span>`).join('');
-      root.querySelector('.prizes').innerHTML = `<div class="grid" aria-hidden="true">${pz(p.prizes.length)}</div><em>獎賞卡 ${p.prizes.length}</em>`;
-      root.querySelector('.piles').innerHTML = `<div class="pile deck" role="img" aria-label="牌庫 ${p.deck.length} 張"><b>${p.deck.length}</b>牌庫</div><div class="pile discard ${p.discard.length ? 'has' : ''}" role="img" aria-label="棄牌區 ${p.discard.length} 張"><b>${p.discard.length}</b>棄牌</div>`;
-      const fan = s === 'ai' ? `<span class="fan" aria-hidden="true">${'<i></i>'.repeat(Math.min(p.hand.length, 10))}</span>` : '';
-      root.querySelector('.who').innerHTML = `<span class="tag">${s === 'me' ? '🧢 你' : '🤖 電腦'}</span><span>🃏 手牌 ${p.hand.length}</span>${fan}
-        <span class="mini-stat">📚 ${p.deck.length}</span><span class="mini-stat">🗑️ ${p.discard.length}</span><span class="mini-stat" role="img" aria-label="獎賞卡 ${p.prizes.length} 張">${pz(p.prizes.length)}</span>`;
+      root.querySelector('.prizes').innerHTML = p.prizes.map(() => '<span class="pz"></span>').join('') + `<em>獎賞卡 ${p.prizes.length}</em>`;
+      root.querySelector('.info').innerHTML = `${s === 'me' ? '🧢 你' : (G.oppIcon || '🤖') + ' ' + (G.oppName || '電腦')}　🃏 手牌 ${p.hand.length}　📚 牌庫 ${p.deck.length}　🗑️ 棄牌 ${p.discard.length}`;
     }
-    const prev = new Set(lastHand.keys()), first = !lastHand.size;
     $('#hand').innerHTML = G.P.me.hand.map(hcard).join('');
-    if (!REDUCE) [...$('#hand').children].forEach((e, i) => { if (!prev.has(+e.dataset.uid)) { e.classList.add('drawn'); e.style.animationDelay = (first ? i * 70 : 0) + 'ms'; } });
+    const hc = $('#handCount'); if (hc) hc.textContent = G.P.me.hand.length + ' 張';
     const myTurn = G.cur === 'me' && !G.busy && !G.over;
     $('#endTurn').disabled = !myTurn;
     document.body.classList.toggle('my-turn', myTurn);
-    $('#turnInfo').textContent = G.over ? '比賽結束' : G.cur === 'me' ? `第 ${G.turn} 回合・輪到你！` : `第 ${G.turn} 回合・電腦思考中…`;
+    $('#turnInfo').textContent = G.over ? '比賽結束' : G.cur === 'me' ? `第 ${G.turn} 回合・輪到你！` : `第 ${G.turn} 回合・${name('ai')}思考中…`;
     hint();
-    playFX();
   }
   function log(t, cls = '') {
+    if (SIM) return;
     const el = document.createElement('div'); el.className = 'lg ' + cls; el.innerHTML = t;
     const L = $('#log'); L.prepend(el); while (L.children.length > 30) L.lastChild.remove();
   }
@@ -201,30 +179,25 @@
   /* ================= 對話框 ================= */
   function ask(title, options, { cancel = true, card } = {}) {
     return new Promise(res => {
-      const M = $('#modal');
+      const M = $('#modal'), back = document.activeElement;
+      M.setAttribute('aria-labelledby', 'mTitle');
       M.innerHTML = `<div class="box pop-in">${card ? `<div class="mcard">${PTCG.card(card)}</div>` : ''}<h2 id="mTitle">${title}</h2><div class="opts2">${options.map((o, i) =>
-        `<button class="btn ${o.disabled ? '' : o.cls || 'sun'}" data-i="${i}" ${o.disabled ? 'disabled' : ''}>${o.label}${o.disabled && o.why ? `<small>${o.why}</small>` : ''}</button>`).join('')}</div>${cancel ? '<button class="btn" data-i="-1">取消</button>' : ''}</div>`;
+        `<button class="btn ${o.disabled ? '' : o.cls || 'sun'}" data-i="${i}" ${o.disabled ? 'aria-disabled="true"' : ''}>${o.label}${o.disabled && o.why ? `<small>${o.why}</small>` : ''}</button>`).join('')}</div>${cancel ? '<button class="btn" data-i="-1">取消</button>' : ''}</div>`;
       M.classList.add('show');
-      const back = document.activeElement;   /* 關閉後把焦點還回去 */
-      const done = v => { M.classList.remove('show'); M.innerHTML = ''; M.onkeydown = null; if (back && back.isConnected) back.focus(); else { const h = $('#hand .hc'); h && h.focus(); } res(v); };
-      M.querySelectorAll('[data-i]').forEach(b => b.onclick = () => { const i = +b.dataset.i; done(i < 0 ? null : options[i].value); });
-      trapFocus(M, cancel ? () => done(null) : null);
+      const btns = [...M.querySelectorAll('[data-i]')];
+      const done = v => { M.classList.remove('show'); M.innerHTML = ''; document.removeEventListener('keydown', key, true); if (back && back.focus && document.contains(back)) back.focus(); res(v); };
+      const key = e => {
+        if (e.key === 'Escape' && cancel) { e.preventDefault(); done(null); }
+        if (e.key === 'Tab') { e.preventDefault(); const i = btns.indexOf(document.activeElement); btns[(i + (e.shiftKey ? -1 : 1) + btns.length) % btns.length].focus(); }
+      };
+      document.addEventListener('keydown', key, true);
+      btns.forEach(b => b.onclick = () => { if (b.getAttribute('aria-disabled') === 'true') { PTCG.restart(b, 'shake'); return; } const i = +b.dataset.i; done(i < 0 ? null : options[i].value); });
+      (btns.find(b => b.getAttribute('aria-disabled') !== 'true') || btns[0])?.focus();
     });
-  }
-  /* 對話框：焦點留在裡面、Esc 取消、打開時聚焦第一個可按的按鈕 */
-  function trapFocus(M, onEsc) {
-    const list = () => [...M.querySelectorAll('button:not([disabled])')];
-    const f = list()[0]; f && f.focus();
-    M.onkeydown = e => {
-      if (e.key === 'Escape' && onEsc) { e.preventDefault(); onEsc(); return; }
-      if (e.key !== 'Tab') return;
-      const L = list(); if (!L.length) return;
-      const i = L.indexOf(document.activeElement);
-      e.preventDefault(); L[(i + (e.shiftKey ? -1 : 1) + L.length) % L.length].focus();
-    };
   }
   const say = (title, btn = '好！') => ask(title, [{ label: btn, value: true }], { cancel: false });
   async function flip(label) {
+    if (SIM) return Math.random() < .5;
     const c = $('#coin'); c.classList.add('show'); c.querySelector('.coin').textContent = '?'; c.querySelector('p').textContent = label;
     PTCG.restart(c.querySelector('.coin'), 'spin'); sfx('card_flip');
     const heads = Math.random() < .5; await sleep(1350);
@@ -234,13 +207,13 @@
   }
 
   /* ================= 動作 ================= */
-  function toBench(p, card) { p.hand = p.hand.filter(c => c !== card); const m = mon(card); p.bench.push(m); queueFly(p, card, { mon: m.uid, place: true }); return m; }
+  function toBench(p, card) { p.hand = p.hand.filter(c => c !== card); const m = mon(card); p.bench.push(m); return m; }
   function evolve(p, card, m) {
-    p.hand = p.hand.filter(c => c !== card); queueFly(p, card, { mon: m.uid });
+    p.hand = p.hand.filter(c => c !== card);
     m.cards.push(card); m.def = card.def; m.status = null; m.poison = m.burn = false; m.evolvedTurn = G.turn;
   }
-  function attach(p, card, m) { p.hand = p.hand.filter(c => c !== card); queueFly(p, card, { mon: m.uid }); m.energies.push(card.def.type); m.cards.push(card); p.energyUsed = true; }
-  function discardCard(p, card) { p.hand = p.hand.filter(c => c !== card); queueFly(p, card, { pile: 'discard' }); p.discard.push(card); }
+  function attach(p, card, m) { p.hand = p.hand.filter(c => c !== card); m.energies.push(card.def.type); m.cards.push(card); p.energyUsed = true; }
+  function discardCard(p, card) { p.hand = p.hand.filter(c => c !== card); p.discard.push(card); }
   function switchActive(p, m, clear = true) {
     const old = p.active; p.bench = p.bench.filter(b => b !== m); if (old) { if (clear) { old.status = null; old.poison = old.burn = false; } p.bench.push(old); } p.active = m;
   }
@@ -249,7 +222,8 @@
     for (let i = 0; i < n; i++) { const t = m.energies.pop(); const idx = m.cards.findLastIndex(c => c.def.kind === 'energy' && c.def.type === t); if (idx >= 0) owner.discard.push(m.cards.splice(idx, 1)[0]); }
   }
   const ownerOf = m => inPlay(G.P.me).includes(m) ? 'me' : 'ai';
-  const name = s => s === 'me' ? '你' : '電腦';
+  const name = s => s === 'me' ? (SIM ? `D${G.P.me.lv}` : '你') : (G.oppName || '電腦');
+  const prizeOf = d => d.mega ? 3 : d.ex ? 2 : 1;
 
   async function useTrainer(side, card, choose) {
     const p = G.P[side], o = G.P[other(side)], d = card.def;
@@ -307,6 +281,7 @@
     sfx(ATK_SFX[m.def.type] || 'attack_hit');
     await sleep(380);
     const dmg = calcDamage(m, o.active, a.dmg);
+    if (!SIM && typeof PTCGArena !== 'undefined') PTCGArena.hit(other(side), { '火': '#FF7A2B', '水': '#4FB6EE', '雷': '#FFE14D', '草': '#7CE07A' }[m.def.type] || '#FFFFFF', dmg >= 100 ? 1.6 : 1);
     if (a.dmg) {
       o.active.dmg += dmg;
       const tag = o.active.def.weak === m.def.type ? '（弱點 ×2！）' : o.active.def.resist === m.def.type ? '（抗性 −30）' : '';
@@ -335,24 +310,37 @@
     for (const s of [other(G.cur), G.cur]) {
       const p = G.P[s], m = p.active;
       if (!m || hpLeft(m) > 0) continue;
-      const taker = G.P[other(s)], n = m.def.ex ? 2 : 1;
+      const taker = G.P[other(s)], n = prizeOf(m.def);
       log(`💫 ${name(s)}的<b>${m.def.name}</b>昏厥了！`, 'big'); sfx('knockout');
       p.discard.push(...m.cards); p.active = null; render(); await sleep(600);
       for (let i = 0; i < n && taker.prizes.length; i++) taker.hand.push(taker.prizes.shift());
-      log(`🎁 ${name(other(s))}拿了 ${n} 張獎賞卡${m.def.ex ? '（ex 給 2 張！）' : ''}`); sfx('star'); render(); await sleep(500);
+      log(`🎁 ${name(other(s))}拿了 ${n} 張獎賞卡${m.def.mega ? '（超級進化 ex 給 3 張！）' : m.def.ex ? '（ex 給 2 張！）' : ''}`); sfx('star'); render(); await sleep(500);
       if (!taker.prizes.length) return win(other(s), '拿完了 6 張獎賞卡');
       if (!p.bench.length) return win(other(s), `${name(s)}的場上沒有寶可夢了`);
       let pick;
-      if (s === 'me') pick = await ask('選 1 隻備戰區的寶可夢上戰鬥場', p.bench.map(b => ({ label: `${b.def.name}（HP ${hpLeft(b)}）`, value: b })), { cancel: false });
-      else pick = aiBest(p.bench, G.P.me.active);
+      if (s === 'me' && !SIM) pick = await ask('選 1 隻備戰區的寶可夢上戰鬥場', p.bench.map(b => ({ label: `${b.def.name}（HP ${hpLeft(b)}）`, value: b })), { cancel: false });
+      else pick = aiPromote(s);
       switchActive(p, pick, false); log(`➡️ ${name(s)}派出<b>${pick.def.name}</b>`); sfx('card_place'); render();
     }
   }
   async function win(side, why) {
-    G.over = true; render();
+    G.over = true;
+    if (SIM) { G.simDone && G.simDone(side, G.turn); return; }
+    render();
     const won = side === 'me';
+    PTCG.recordBattle(G.P.ai.lv, won);
+    if (G.boss) {
+      if (won) PTCG.bossWin(G.boss.no); PTCG.starPill(document.querySelector('.star-pill'));
+      if (won) { sfx('level_clear'); PTCG.confetti(160); } else sfx('knockout');
+      const last = G.boss.no === 5;
+      const opts = won && !last ? [{ label: `⚔️ 挑戰下一位魔王`, value: 'next', cls: 'berry' }] : [];
+      opts.push({ label: '🔁 再挑戰一次', value: 'again' }, { label: '🏰 回魔王關', value: 'back', cls: 'grass' });
+      const r = await ask(`${won ? (last ? '👑 你打倒了終極魔王！你就是卡牌大師！' : `🏆 你打敗了 ${G.oppName}！`) : `💪 ${G.oppName}贏了，再接再厲！`}<br><small>${why}</small><br><small>「${won ? G.boss.lose : G.boss.win}」</small>`, opts, { cancel: false });
+      if (r === 'next') location.href = 'battle.html?boss=' + (G.boss.no + 1);
+      else if (r === 'again') location.reload(); else location.href = 'boss.html';
+      return;
+    }
     PTCG.setStars('battle', won ? 3 : 1); PTCG.starPill(document.querySelector('.star-pill'));
-    PTCG.record(r => { r.battles = (r.battles || 0) + 1; if (won) r.wins = (r.wins || 0) + 1; });
     if (won) { sfx('level_clear'); PTCG.confetti(120); } else sfx('knockout');
     const r = await ask(`${won ? '🏆 你贏了！' : '💪 電腦贏了，再接再厲！'}<br><small>${why}</small>${won ? '<br><small>得到 3 顆星！</small>' : '<br><small>完成一場比賽，得到 1 顆星。</small>'}`,
       [{ label: '🔁 再比一場', value: 'again' }, { label: '🗺 回地圖', value: 'map', cls: 'grass' }], { cancel: false });
@@ -381,8 +369,9 @@
     p.turns++; p.energyUsed = p.supporterUsed = p.retreated = false;
     if (!p.deck.length) { log(`📭 ${name(side)}的牌庫沒有牌了！`); return win(other(side), `${name(side)}回合開始時沒辦法抽牌`); }
     draw(p, 1); sfx('card_draw', { vol: .6 });
-    log(`—— 第 ${G.turn} 回合：${side === 'me' ? '輪到你了！' : '電腦的回合'} ——`, 'turn');
-    if (side === 'me') { G.busy = false; render(); } else { G.busy = true; render(); await sleep(700); await aiTurn(); }
+    log(`—— 第 ${G.turn} 回合：${side === 'me' ? '輪到你了！' : name('ai') + '的回合'} ——`, 'turn');
+    if (G.turn > 160) return win(G.P.me.prizes.length <= G.P.ai.prizes.length ? 'me' : 'ai', '比賽時間到');
+    if (side === 'me' && !SIM) { G.busy = false; render(); } else { G.busy = true; render(); await sleep(700); await aiTurn(side); }
   }
 
   /* ================= 玩家操作 ================= */
@@ -429,75 +418,160 @@
       return ((by ? by.d : 0) - (bx ? bx.d : 0)) || (hpLeft(y) - hpLeft(x));
     })[0];
   }
-  async function aiTurn() {
-    const p = G.P.ai, o = G.P.me, act = async (t, s) => { log(t); if (s) sfx(s); render(); await sleep(750); };
-    const pick = async (t, opts) => opts.find(x => !x.disabled)?.value || null;
-    const playBasics = async () => { for (const c of p.hand.filter(isBasic)) { if (p.bench.length >= 5) break; toBench(p, c); await act(`🪑 電腦把<b>${c.def.name}</b>放到備戰區`, 'card_place'); } };
-    const evolveAll = async () => {
-      for (const c of p.hand.filter(c => c.def.kind === 'pokemon' && c.def.stage !== '基礎')) {
-        const t = evolveTargets(p, c).filter(m => !whyNoEvolve(p, m)).sort((a, b) => (b === p.active) - (a === p.active))[0];
-        if (t) { const f = t.def.name; evolve(p, c, t); await act(`⬆️ 電腦的${f}進化成<b>${c.def.name}</b>！`, 'star'); }
+  /* 對手下回合最多能打多少（假設再附 1 張能量） */
+  function threat(attacker, target) {
+    if (!attacker) return 0;
+    let mx = 0;
+    for (const a of attacker.def.attacks) if (missing(attacker.energies, a.cost) <= 1) mx = Math.max(mx, calcDamage(attacker, target, a.dmg));
+    return mx;
+  }
+  /* 昏厥後派誰上場 */
+  function aiPromote(side) {
+    const p = G.P[side], foe = G.P[other(side)].active, L = LEVELS[p.lv] || LEVELS[3];
+    if (L.randomTarget) return p.bench[Math.random() * p.bench.length | 0];
+    if (!L.protect) return aiBest(p.bench, foe);
+    if (L.aggroSwitch) { const ready = p.bench.filter(m => bestAttack(m, foe)); if (ready.length) return aiBest(ready, foe); const weak = p.bench.filter(m => foe && foe.def.weak === m.def.type); if (weak.length) return weak.sort((a, b) => b.energies.length - a.energies.length)[0]; }
+    /* 高手：能打的優先，打不贏時派非 ex 擋一下 */
+    const ready = p.bench.filter(m => bestAttack(m, foe));
+    if (ready.length) return aiBest(ready, foe);
+    return p.bench.slice().sort((a, b) => (prizeOf(a.def) - prizeOf(b.def)) || (hpLeft(b) - hpLeft(a)))[0];
+  }
+  async function aiTurn(side = 'ai') {
+    if (G.over) return;
+    const p = G.P[side], o = G.P[other(side)], L = LEVELS[p.lv] || LEVELS[3], who = name(side);
+    const act = async (t, s) => { log(t); if (s) sfx(s); render(); await sleep(750); };
+    const roll = x => Math.random() < x;
+    const can = nm => L.items.includes(nm) || L.supporters.includes(nm);
+    const playBasics = async () => {
+      for (const c of p.hand.filter(isBasic)) {
+        if (p.bench.length >= 5) break;
+        if (L.safeStart && c.def.ex && p.bench.length >= 3) continue;   /* 魔王：ex 不急著上場 */
+        toBench(p, c); await act(`🪑 ${who}把<b>${c.def.name}</b>放到備戰區`, 'card_place');
       }
     };
-    const useCard = async nm => { const c = p.hand.find(x => x.def.name === nm); if (!c || trainerUsable('ai', c)) return false; await useTrainer('ai', c, pickFor(nm)); render(); await sleep(700); return true; };
+    const evolveAll = async () => {
+      if (!roll(L.evolve)) return;
+      for (const c of p.hand.filter(c => c.def.kind === 'pokemon' && c.def.stage !== '基礎')) {
+        const t = evolveTargets(p, c).filter(m => !whyNoEvolve(p, m)).sort((a, b) => (b === p.active) - (a === p.active))[0];
+        if (t) { const f = t.def.name; evolve(p, c, t); await act(`⬆️ ${who}的${f}進化成<b>${c.def.name}</b>！`, 'star'); }
+      }
+    };
     const pickFor = nm => async (t, opts) => {
-      const vals = opts.filter(o => !o.disabled).map(o => o.value);
+      const vals = opts.filter(x => !x.disabled).map(x => x.value);
+      if (L.randomTarget) return vals[Math.random() * vals.length | 0];
       if (nm === '精靈球') { const want = p.hand.filter(c => c.def.from).map(c => c.def.from); return vals.find(v => want.includes(v.def.name)) || vals.find(v => !v.def.ex) || vals[0]; }
       if (nm === '老大的指令') return vals.sort((a, b) => hpLeft(a) - hpLeft(b))[0];
       if (nm === '好傷藥') return vals.sort((a, b) => b.dmg - a.dmg)[0];
       if (nm === '寶可夢交替') return aiBest(vals, o.active);
+      if (nm === '神奇糖果') return vals.sort((a, b) => (b[1] === p.active) - (a[1] === p.active))[0];
       return vals[0];
     };
+    const useCard = async nm => { if (!can(nm)) return false; const c = p.hand.find(x => x.def.name === nm); if (!c || trainerUsable(side, c)) return false; await useTrainer(side, c, pickFor(nm)); render(); await sleep(700); return true; };
+    const switchTo = async t => {
+      if (can('寶可夢交替') && p.hand.some(c => c.def.name === '寶可夢交替')) { const c = p.hand.find(x => x.def.name === '寶可夢交替'); await useTrainer(side, c, async () => t); render(); await sleep(700); return true; }
+      if (!whyRetreat(p)) { await retreat(side, t); render(); await sleep(700); return true; }
+      return false;
+    };
 
+    /* 1. 擺場：基礎寶可夢、找牌、進化 */
     await playBasics();
     if (p.bench.length < 4) await useCard('精靈球');
     await playBasics();
     await evolveAll();
     await useCard('神奇糖果');
-    /* 支援者：能擊倒就用老大的指令，否則手牌少就抽牌 */
-    if (!whySupporter(p)) {
-      const b = p.active && bestAttack(p.active, null);
-      const koTarget = b && o.bench.find(m => calcDamage(p.active, m, b.a.dmg) >= hpLeft(m));
-      if (koTarget && p.hand.some(c => c.def.name === '老大的指令') && !whyAttack(p, b.a)) {
+
+    /* 2. 支援者：能收割就用老大的指令（高手挑獎賞卡多的），不然手牌少就抽牌 */
+    if (!whySupporter(p) && p.active) {
+      const b = bestAttack(p.active, null);
+      let koTarget = null;
+      if (b && can('老大的指令') && !whyAttack(p, b.a)) {
+        const kos = o.bench.filter(m => calcDamage(p.active, m, b.a.dmg) >= hpLeft(m));
+        const activeKO = calcDamage(p.active, o.active, b.a.dmg) >= hpLeft(o.active);
+        kos.sort((x, y) => prizeOf(y.def) - prizeOf(x.def));
+        if (kos.length && (!activeKO || (L.protect && prizeOf(kos[0].def) > prizeOf(o.active.def)))) koTarget = kos[0];
+      }
+      if (koTarget && p.hand.some(c => c.def.name === '老大的指令')) {
         const c = p.hand.find(x => x.def.name === '老大的指令');
-        await useTrainer('ai', c, async () => koTarget); render(); await sleep(700);
-      } else if (p.hand.length <= 4) { if (await useCard('博士的研究')) { await playBasics(); await evolveAll(); } }
+        await useTrainer(side, c, async () => koTarget); render(); await sleep(700);
+      } else if (p.hand.length <= L.researchAt) { if (await useCard('博士的研究')) { await playBasics(); await evolveAll(); await useCard('神奇糖果'); } }
     }
     if (p.active && p.active.dmg >= 30) await useCard('好傷藥');
-    /* 附能量 */
-    const energies = p.hand.filter(c => c.def.kind === 'energy');
-    if (energies.length) {
-      const need = m => { const atks = m.def.attacks; const a = atks[atks.length - 1]; return missing(m.energies, a.cost); };
-      let target = p.active && need(p.active) > 0 ? p.active : p.bench.slice().sort((a, b) => (b.def.stage !== '基礎') - (a.def.stage !== '基礎') || need(a) - need(b)).find(m => need(m) > 0) || p.active;
-      const wantTypes = target.def.attacks.flatMap(a => a.cost).filter(t => t !== '無色');
-      const card = energies.find(c => wantTypes.includes(c.def.type)) || energies[0];
-      attach(p, card, target); await act(`⚡ 電腦把${card.def.name}附給<b>${target.def.name}</b>`, 'energy_attach');
-    }
-    /* 戰鬥寶可夢打不了、備戰區有人能打：交換 */
-    if (p.active && !bestAttack(p.active, o.active) || (p.active && p.active.status && p.active.status !== 'conf')) {
-      const ready = p.bench.filter(m => bestAttack(m, o.active));
-      if (ready.length) {
-        const t = aiBest(ready, o.active);
-        if (p.hand.some(c => c.def.name === '寶可夢交替')) { const c = p.hand.find(x => x.def.name === '寶可夢交替'); await useTrainer('ai', c, async () => t); render(); await sleep(700); }
-        else if (!whyRetreat(p)) { await retreat('ai', t); render(); await sleep(700); }
+
+    /* 3. 保護（D4 以上）：戰鬥寶可夢下回合會被打倒、這回合又打不倒對手，就換一隻上來 */
+    if (L.protect && p.active && o.active && p.bench.length) {
+      const myBest = bestAttack(p.active, o.active);
+      const canKO = myBest && !whyAttack(p, myBest.a) && myBest.d >= hpLeft(o.active);
+      const danger = threat(o.active, p.active) >= hpLeft(p.active);
+      if (danger && !canKO && prizeOf(p.active.def) >= 2) {
+        const sub = p.bench.filter(m => prizeOf(m.def) === 1 && bestAttack(m, o.active)).sort((a, b) => ((bestAttack(b, o.active)?.d || 0) - (bestAttack(a, o.active)?.d || 0)) || (hpLeft(b) - hpLeft(a)))[0];
+        if (sub && await switchTo(sub)) log(`🛡️ ${who}把重要的寶可夢撤下來保護！`);
       }
     }
-    /* 攻擊 */
-    if (p.active && G.turn !== 1) {
-      const b = bestAttack(p.active, o.active);
-      if (b && !whyAttack(p, b.a)) { await doAttack('ai', b.a); return; }
+
+    /* 4. 附能量 */
+    const energies = p.hand.filter(c => c.def.kind === 'energy');
+    if (energies.length && !roll(L.skipEnergy) && p.active && o.active) {
+      let target, card;
+      if (L.randomTarget) { const all = inPlay(p); target = all[Math.random() * all.length | 0]; card = energies[Math.random() * energies.length | 0]; }
+      else {
+        /* 高手：先看附 1 張能不能讓戰鬥寶可夢這回合擊倒對手 */
+        if (L.smartEnergy) for (const c of energies) {
+          const after = p.active.energies.concat(c.def.type);
+          const b = bestAttack(p.active, o.active, after), now = bestAttack(p.active, o.active);
+          if (b && b.d >= hpLeft(o.active) && (!now || now.d < hpLeft(o.active))) { target = p.active; card = c; break; }
+        }
+        if (!target) {
+          const need = m => { const atks = m.def.attacks; return missing(m.energies, atks[atks.length - 1].cost); };
+          const weakHitter = L.aggroSwitch && o.active && p.bench.filter(m => m.def.type === o.active.def.weak && need(m) > 0).sort((a, b) => need(a) - need(b))[0];
+          target = weakHitter && need(p.active) <= 0 ? weakHitter : need(p.active) > 0 ? p.active : p.bench.slice().sort((a, b) => (b.def.stage !== '基礎') - (a.def.stage !== '基礎') || (L.smartEnergy ? prizeOf(b.def) - prizeOf(a.def) : 0) || need(a) - need(b)).find(m => need(m) > 0) || p.active;
+          const want = target.def.attacks.flatMap(a => a.cost).filter(t => t !== '無色');
+          card = energies.find(c => want.includes(c.def.type)) || energies[0];
+        }
+      }
+      attach(p, card, target); await act(`⚡ ${who}把${card.def.name}附給<b>${target.def.name}</b>`, 'energy_attach');
     }
-    log('電腦結束了回合'); await endTurn();
+
+    /* 5. 換人：戰鬥寶可夢打不了（D3 以上才會想到） */
+    if (L.smartSwitch && p.active && (!bestAttack(p.active, o.active) || (p.active.status && p.active.status !== 'conf'))) {
+      const ready = p.bench.filter(m => bestAttack(m, o.active));
+      if (ready.length) await switchTo(aiBest(ready, o.active));
+    }
+
+    /* 5b. 高手：備戰區有更好的打手（打弱點、能擊倒）就主動換上場 */
+    if (L.aggroSwitch && p.active && o.active && p.bench.length && !(p.active.status === 'sleep' || p.active.status === 'para')) {
+      const cur = bestAttack(p.active, o.active), curD = cur && !whyAttack(p, cur.a) ? cur.d : 0, need = hpLeft(o.active);
+      const cand = p.bench.map(m => ({ m, b: bestAttack(m, o.active) })).filter(x => x.b).sort((x, y) => y.b.d - x.b.d)[0];
+      if (cand && ((cand.b.d >= need && curD < need) || cand.b.d >= curD + 50)) {
+        if (await switchTo(cand.m)) log(`🔁 ${who}換上更適合的<b>${cand.m.def.name}</b>！`);
+      }
+    }
+
+    /* 6. 攻擊 */
+    if (p.active && o.active && G.turn !== 1 && !roll(L.attackSkip)) {
+      const usable = p.active.def.attacks.filter(a => !whyAttack(p, a));
+      if (usable.length) {
+        let a = roll(L.randomAtk) ? usable[Math.random() * usable.length | 0] : bestAttack(p.active, o.active).a;
+        if (!usable.includes(a)) a = usable[0];
+        /* 高手：能擊倒時選剛好夠的招；不能擊倒時，有狀態效果的小招也可能更好 */
+        if (L.protect) {
+          const kos = usable.filter(x => calcDamage(p.active, o.active, x.dmg) >= hpLeft(o.active));
+          if (kos.length) a = kos[0];
+        }
+        await doAttack(side, a); return;
+      }
+    }
+    log(`${who}結束了回合`); await endTurn();
   }
 
   /* ================= 開局 ================= */
-  async function setup() {
-    const deck = await ask('🎴 選擇你的牌組', [
-      { label: '🔥⚡ 火焰雷電隊<small>小火龍、皮卡丘、雷電獸 ex</small>', value: 'fireThunder', cls: 'berry' },
-      { label: '💧🌿 水流森林隊<small>傑尼龜、妙蛙種子、拉普拉斯 ex</small>', value: 'waterLeaf', cls: 'grass' }], { cancel: false });
-    G.P.me = player('me', deck); G.P.ai = player('ai', deck === 'fireThunder' ? 'waterLeaf' : 'fireThunder');
-    log(`你選了 ${DECKS[deck].name}，電腦用 ${DECKS[G.P.ai.deckKey].name}`);
-    /* 抽 7 張與重抽 */
+  /* 電腦自動擺場（開局） */
+  function aiPlaceStart(side) {
+    const p = G.P[side], L = LEVELS[p.lv] || LEVELS[3];
+    const ab = p.hand.filter(isBasic).sort((a, b) => L.randomTarget ? Math.random() - .5 : (a.def.ex - b.def.ex) || (b.def.hp - a.def.hp));
+    p.active = mon(ab[0]); p.hand = p.hand.filter(c => c !== ab[0]);
+    ab.slice(1, L.safeStart ? 5 : 4).forEach(c => { if (!(L.safeStart && c.def.ex && p.bench.length >= 2)) toBench(p, c); });
+  }
+  function drawOpening() {
     const mull = {};
     for (const s of ['me', 'ai']) {
       const p = G.P[s]; mull[s] = 0;
@@ -506,6 +580,55 @@
       if (mull[s]) log(`🔁 ${name(s)}手牌沒有基礎寶可夢，重抽了 ${mull[s]} 次`);
     }
     for (const s of ['me', 'ai']) if (mull[other(s)]) { draw(G.P[s], mull[other(s)]); log(`➕ 對手重抽，${name(s)}多抽了 ${mull[other(s)]} 張`); }
+    /* 魔王特權：開局多抽 */
+    for (const s of ['me', 'ai']) { const b = (LEVELS[G.P[s].lv] || {}).bonusDraw; if (b) { draw(G.P[s], b); log(`👑 魔王特權：${name(s)}開局多抽了 ${b} 張`, 'big'); } }
+  }
+  function opponentBadge() {
+    const b = $('#oppBadge'); if (!b) return;
+    b.innerHTML = G.boss ? `${G.boss.icon} <b>${G.boss.name}</b><small>${G.boss.title}・${LEVELS[G.P.ai.lv].title}</small>` : `🤖 <b>電腦</b><small>${LEVELS[G.P.ai.lv].title}</small>`;
+    b.hidden = false;
+  }
+
+  /* 自動測試：兩個電腦對打，回傳勝方 */
+  if (QS.has('sim')) window.__LEVELS = LEVELS;
+  window.__simGame = (lvMe, lvAi, deckMe) => new Promise(res => setTimeout(() => {
+    SIM = true; Object.assign(G, { turn: 0, cur: null, over: false, busy: false, P: {}, boss: null, oppName: null });
+    G.simDone = (side, turns) => res({ winner: side, turns, prizes: [G.P.me.prizes.length, G.P.ai.prizes.length] });
+    G.P.me = player('me', deckMe, lvMe); G.P.ai = player('ai', deckMe === 'fireThunder' ? 'waterLeaf' : 'fireThunder', lvAi);
+    drawOpening(); aiPlaceStart('me'); aiPlaceStart('ai');
+    for (const s of ['me', 'ai']) for (let i = 0; i < 6; i++) G.P[s].prizes.push(G.P[s].deck.shift());
+    startTurn(Math.random() < .5 ? 'me' : 'ai');
+  }, 20));
+
+  async function setup() {
+    if (QS.has('sim')) return;
+    const bossNo = +QS.get('boss');
+    let deck, lv;
+    if (bossNo && PTCG.BOSSES[bossNo - 1]) {
+      const B = PTCG.BOSSES[bossNo - 1];
+      if (!PTCG.bossUnlocked(bossNo)) { await say('要先打敗前一位魔王，才能挑戰這一位喔！', '回魔王關'); location.href = 'boss.html'; return; }
+      G.boss = B; G.oppName = B.name; G.oppIcon = B.icon; lv = B.lv;
+      $('#pageTitle').textContent = `👑 終極魔王關・第 ${B.no} 戰`; if (B.no === 5) { document.body.dataset.bgm = 'bgm_boss'; document.body.classList.add('final-boss'); if (typeof PTCGAudio !== 'undefined') PTCGAudio.music('bgm_boss'); } if (G.boss) document.body.classList.add('boss-mode'); $('#backBtn').href = 'boss.html'; $('#backBtn').textContent = '🏰 回魔王關';
+      document.title = `${B.name}｜終極魔王關`;
+      await ask(`${B.icon} <b>${B.name}</b>出現了！<br><small>${B.title}・${LEVELS[lv].title}</small><br>「${B.intro}」${LEVELS[lv].bonusDraw ? `<br><small>👑 魔王特權：開局多抽 ${LEVELS[lv].bonusDraw} 張手牌</small>` : ''}`, [{ label: '⚔️ 接受挑戰！', value: true, cls: 'berry' }], { cancel: false });
+      deck = await ask('🎴 選擇你的牌組', [
+        { label: `🔥⚡ 火焰雷電隊<small>對手會用：💧🌿 水流森林隊</small>`, value: 'fireThunder', cls: 'berry' },
+        { label: `💧🌿 水流森林隊<small>對手會用：🔥⚡ 火焰雷電隊</small>`, value: 'waterLeaf', cls: 'grass' }], { cancel: false });
+    } else {
+      lv = await ask('🎚️ 選擇電腦的強度', [
+        { label: '🐣 D1 見習生<small>常常忘記附能量，適合第一次玩</small>', value: 1, cls: 'grass' },
+        { label: '🧢 D2 訓練家<small>會進化、會附能量，但不太會用策略卡</small>', value: 2 },
+        { label: '🔥 D3 道館館主<small>會算傷害、會換人、會用老大的指令</small>', value: 3, cls: 'berry' },
+        { label: '🏰 更強的對手在「終極魔王關」！', value: 'boss' }], { cancel: false });
+      if (lv === 'boss') { location.href = 'boss.html'; return; }
+      deck = await ask('🎴 選擇你的牌組', [
+        { label: '🔥⚡ 火焰雷電隊<small>小火龍、皮卡丘、雷電獸 ex</small>', value: 'fireThunder', cls: 'berry' },
+        { label: '💧🌿 水流森林隊<small>傑尼龜、妙蛙種子、拉普拉斯 ex</small>', value: 'waterLeaf', cls: 'grass' }], { cancel: false });
+    }
+    G.P.me = player('me', deck); G.P.ai = player('ai', deck === 'fireThunder' ? 'waterLeaf' : 'fireThunder', lv);
+    opponentBadge();
+    log(`你選了 ${DECKS[deck].name}，${name('ai')}（${LEVELS[lv].title}）用 ${DECKS[G.P.ai.deckKey].name}${LEVELS[lv].mega ? '・加入超級進化 ex！' : ''}`);
+    drawOpening();
     render();
     /* 放寶可夢 */
     const me = G.P.me, basics = me.hand.filter(isBasic);
@@ -516,9 +639,7 @@
       const b = await ask('也要把其他基礎寶可夢放到備戰區嗎？', rest.map(c => ({ label: `🪑 ${c.def.name}`, value: c })).concat([{ label: '完成 ✔', value: 'done', cls: 'grass' }]), { cancel: false });
       if (b === 'done') break; toBench(me, b); render();
     }
-    const ai = G.P.ai, ab = ai.hand.filter(isBasic).sort((a, b) => (a.def.ex - b.def.ex) || (b.def.hp - a.def.hp));
-    ai.active = mon(ab[0]); ai.hand = ai.hand.filter(c => c !== ab[0]);
-    ab.slice(1, 4).forEach(c => toBench(ai, c));
+    aiPlaceStart('ai');
     for (const s of ['me', 'ai']) for (let i = 0; i < 6; i++) G.P[s].prizes.push(G.P[s].deck.shift());
     render(); sfx('card_place');
     /* 擲硬幣決定先後攻 */
@@ -526,8 +647,8 @@
     const h = await flip('擲硬幣決定先後攻'); const winMe = h === guess;
     let first;
     if (winMe) first = await ask('你猜對了！要先攻還是後攻？', [{ label: '🥇 先攻<small>早一步準備，但第一回合不能攻擊、不能用支援者</small>', value: 'me' }, { label: '🥈 後攻<small>第一回合就能攻擊</small>', value: 'ai' }], { cancel: false });
-    else { first = 'ai'; await say('電腦猜對了，電腦選擇先攻！'); }
-    log(`🪙 ${first === 'me' ? '你先攻' : '電腦先攻'}！雙方翻開寶可夢，比賽開始！`, 'big'); sfx('star');
+    else { first = lv >= 4 ? 'me' : 'ai'; await say(`${name('ai')}猜對了，選擇${first === 'me' ? '後攻' : '先攻'}！`); }
+    log(`🪙 ${first === 'me' ? '你先攻' : name('ai') + '先攻'}！雙方翻開寶可夢，比賽開始！`, 'big'); sfx('star');
     G.turn = 0; startTurn(first);
   }
 
@@ -538,6 +659,7 @@
     const any = e.target.closest('.bc:not(.empty)');
     if (any) { const m = [...inPlay(G.P.me), ...inPlay(G.P.ai)].find(x => x.uid === +any.dataset.uid); if (m) ask(`${m.def.name}（剩 ${hpLeft(m)} HP）`, [], { card: cardView(m.def) }); }
   });
+  document.addEventListener('keydown', e => { const t = e.target.closest && e.target.closest('.bc[role=button]'); if (t && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); t.click(); } });
   $('#endTurn').onclick = async () => {
     if (G.cur !== 'me' || G.busy || G.over) return;
     const p = G.P.me;
@@ -547,28 +669,10 @@
     }
     log('你結束了回合'); await endTurn();
   };
-  /* 鍵盤：在場上的卡按 Enter／空白鍵等於點擊 */
-  document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('bc')) { e.preventDefault(); e.target.click(); } });
-  /* 手牌抽屜收合 */
-  $('#handToggle').onclick = () => {
-    const d = $('#dock'), c = d.classList.toggle('collapsed');
-    $('#handToggle').textContent = c ? '展開 ▴' : '收起 ▾'; $('#handToggle').setAttribute('aria-expanded', String(!c)); sfx('ui_click');
-  };
-  /* 手機版：對戰紀錄改用對話框顯示 */
-  $('#logBtn').onclick = () => {
-    const M = $('#modal');
-    M.innerHTML = `<div class="box pop-in"><h2 id="mTitle">📜 對戰紀錄</h2><div class="logbox">${$('#log').innerHTML}</div><div class="opts2" style="margin-top:10px"><button class="btn sun" data-i="-1">關閉</button></div></div>`;
-    const back = document.activeElement;
-    const close = () => { M.classList.remove('show'); M.innerHTML = ''; M.onkeydown = null; back && back.focus(); };
-    M.classList.add('show'); M.querySelector('[data-i]').onclick = close; trapFocus(M, close);
-  };
-  /* 依底部抽屜的實際高度留白，手牌永遠不會蓋住場地 */
-  const fit = () => {
-    const dock = $('#dock').offsetHeight, panel = getComputedStyle($('.panel')).position === 'fixed' ? $('.panel').offsetHeight : 0;
-    document.documentElement.style.setProperty('--hand-h', dock + 'px');
-    document.documentElement.style.setProperty('--dock-h', dock + panel + 'px');
-  };
-  if (window.ResizeObserver) { const ro = new ResizeObserver(fit); ro.observe($('#dock')); ro.observe($('.panel')); }
-  addEventListener('resize', fit); fit();
+  /* 3D 競技場、手牌抽屜 */
+  if (!QS.has('sim')) PTCG.whenIdle(() => PTCG.load3D(['js/arena3d.js']).then(() => { if (PTCGArena.ok) { PTCGArena.init(QS.get('boss') ? 'boss' : 'normal'); document.body.classList.add('has-arena'); } }).catch(() => {}), 1500);
+  const hb = $('#handBar'), tg = $('#handToggle');
+  if (tg) tg.onclick = () => { const c = hb.classList.toggle('closed'); tg.setAttribute('aria-expanded', String(!c)); };
+  if (hb && window.ResizeObserver) new ResizeObserver(() => document.documentElement.style.setProperty('--hand-h', hb.offsetHeight + 'px')).observe(hb);
   window.addEventListener('load', () => setTimeout(setup, 300));
 })();

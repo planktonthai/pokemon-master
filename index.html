@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>/* 沒有硬體加速的裝置直接改用平面地圖，不下載 3D 引擎 */(function(){try{if(/[?&]force3d/.test(location.search))return;var c=document.createElement('canvas'),o={failIfMajorPerformanceCaveat:true},g=c.getContext('webgl2',o)||c.getContext('webgl',o),d=g&&g.getExtension('WEBGL_debug_renderer_info'),n=g?String(g.getParameter(d?d.UNMASKED_RENDERER_WEBGL:g.RENDERER)):'';if(!g||/swiftshader|llvmpipe|softpipe|software|basic render/i.test(n))location.replace('map.html'+location.search)}catch(e){location.replace('map.html')}})();</script>
 <!-- seo -->
 <meta name="description" content="給小學 3～6 年級的寶可夢卡牌遊戲教學：3D 冒險地圖、動畫教學、互動小遊戲和模擬對戰，從新手一路學到高手。">
 <meta name="theme-color" content="#5BA8F5">
@@ -20,10 +21,8 @@
 <link rel="canonical" href="https://planktonthai.github.io/pokemon-master/">
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@500;900&display=swap" media="print" onload="this.media='all'">
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@500;900&display=swap"></noscript>
+<link rel="preload" href="assets/fonts/huninn.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/notosanstc-900.woff2" as="font" type="font/woff2" crossorigin>
 <!-- /seo -->
 <title>寶可夢卡牌訓練營</title>
 <link rel="stylesheet" href="assets/css/style.min.css">
@@ -64,7 +63,7 @@
   }
   .gym-tag i{font-style:normal;font-size:14px;letter-spacing:1px}
   .gym-tag.current{background:linear-gradient(180deg,#FFF6C8,#FFE066);animation:tagGlow 1.4s ease-in-out infinite}
-  .gym-tag.locked{background:#E9E6DD;color:#6F6C62}
+  .gym-tag.locked{background:#E9E6DD;color:#4A4840}
   .gym-tag.locked b{background:#D2CEC2}
   .gym-tag:hover{filter:brightness(1.08)}
   .gym-tag.nope{animation:nope .35s}
@@ -76,16 +75,16 @@
   .loading .spin{width:64px;height:64px;border-radius:50%;border:6px solid #fff;border-top-color:var(--sun);animation:spin 1s linear infinite}
   .loading p{font-size:20px;margin:0}
   .fade{position:fixed;inset:0;z-index:25;background:#fff;opacity:0;pointer-events:none;transition:opacity .6s}
-  @media (max-width:560px){ .zone-pill{font-size:15px;padding:4px 10px;white-space:nowrap} .hud .btn{padding:6px 10px} .gym-tag{font-size:15px} .hint{font-size:13px} }
+  @media (max-width:560px){ .zone-pill{font-size:18px} .gym-tag{font-size:15px} .hint{font-size:13px} }
 </style>
 </head>
 <body>
-<div id="world" role="img" aria-label="新手草原 3D 村莊地圖"></div>
+<div id="world" role="region" aria-label="訓練營 3D 冒險地圖：拖曳轉動視角，點道館進入關卡"></div>
 <div id="tags"></div>
 
 <div class="hud topbar">
   <div style="display:flex;gap:10px;align-items:center">
-    <a class="btn" href="map.html" aria-label="平面地圖" title="平面地圖">🗺</a><a class="btn" href="about.html" aria-label="關於本站" title="關於本站・給家長與老師">ℹ️</a><a class="btn" id="achBtn" href="achievements.html" aria-label="我的成就" title="我的成就：星星與徽章">🏅</a>
+    <a class="btn" href="map.html" aria-label="平面地圖" title="平面地圖">🗺</a><a class="btn" href="achievements.html" aria-label="成就與戰績" title="成就與戰績">🏆</a><a class="btn" href="about.html" aria-label="關於本站" title="關於本站・給家長與老師">ℹ️</a>
     <span class="zone-pill" id="zonePill">🌱 新手草原</span>
   </div>
   <span class="star-pill" aria-live="polite"></span>
@@ -100,8 +99,6 @@
 <div class="loading" id="loading"><div class="spin"></div><p>訓練營世界建造中…</p></div>
 
 <script>
-  /* 沒有 WebGL 的裝置：先改去平面地圖，不下載 3D 程式 */
-  (function(){ try { var c=document.createElement('canvas'); if(!(c.getContext('webgl2')||c.getContext('webgl'))) location.replace('map.html'); } catch(e){ location.replace('map.html'); } })();
   /* 載入檢查：資源缺少或出錯時顯示說明，不要一直轉圈 */
   (function(){
     function fail(msg){
@@ -110,24 +107,26 @@
     }
     window.__villageFail = fail;
     window.addEventListener('error', function(e){
-      if (e.target && (e.target.tagName==='SCRIPT' || e.target.tagName==='LINK')) fail('找不到網站的程式檔。請先把 zip「全部解壓縮」，再打開資料夾裡的 prototype/village.html；，再打開 index.html。');
+      if (e.target && (e.target.tagName==='SCRIPT' || e.target.tagName==='LINK')) fail('找不到網站的程式檔。請先把 zip「全部解壓縮」，再打開資料夾裡的 index.html。');
       else if (e.message) fail('發生錯誤：'+e.message+'<br>可以改開 village-standalone.html 試試看。');
     }, true);
-    setTimeout(function(){ if(document.getElementById('loading') && !window.__villageOK) fail('等太久了。請確認已經解壓縮整個資料夾，，再打開 index.html。'); }, 20000);
+    setTimeout(function(){ if(document.getElementById('loading') && !window.__villageOK) fail('等太久了。請確認已經解壓縮整個資料夾，再打開 index.html。'); }, 20000);
   })();
 </script>
-<script src="assets/vendor/three.min.js" defer></script>
-<script src="assets/vendor/three-post.js" defer></script>
-<script src="assets/js/partners3d.js" defer></script>
-<script src="assets/js/audio.js" defer></script>
-<script src="assets/js/common.js" defer></script>
+<script defer src="assets/vendor/three.min.js"></script>
+<script defer src="assets/vendor/three-post.js"></script>
+<script defer src="assets/js/partners3d.js"></script>
+<script defer src="assets/js/audio.js"></script>
+<script defer src="assets/js/common.js"></script>
 <script>
-addEventListener('DOMContentLoaded', () => {   /* 程式檔延後載入，先畫出載入畫面 */
-  if (typeof THREE === 'undefined' || typeof PTCG === 'undefined') { window.__villageFail && __villageFail('找不到網站的程式檔。請先把 zip「全部解壓縮」，再打開資料夾裡的 prototype/village.html；，再打開 index.html。'); return; }
-  if (!document.createElement('canvas').getContext('webgl2') && !document.createElement('canvas').getContext('webgl')) { location.replace('map.html'); return; }
+/* 先讓載入畫面顯示，再開始建造 3D 世界 */
+addEventListener('DOMContentLoaded', () => requestAnimationFrame(() => setTimeout(() => {
+  if (typeof THREE === 'undefined' || typeof PTCG === 'undefined') { window.__villageFail && __villageFail('找不到網站的程式檔。請先把 zip「全部解壓縮」，再打開資料夾裡的 index.html。'); return; }
+  if (!PTCG.hasGPU()) { location.replace('map.html' + location.search); return; }
   const T = THREE;
   PTCG.starPill(document.querySelector('.star-pill'));
   PTCG.cheatButton();
+  setTimeout(() => PTCG.onboarding(), 2600);
 
   /* ================= 基本設定 ================= */
   const host = document.getElementById('world');
@@ -170,7 +169,7 @@ addEventListener('DOMContentLoaded', () => {   /* 程式檔延後載入，先畫
 
   /* ================= 路徑與關卡位置 ================= */
   const PLAZA = new T.Vector2(0, 9), PLAZA_R = 7.5;
-  const pathPts = [[0, 9], [-6, 4], [-10, -3], [-9, -11], [-2, -17], [8, -17], [16, -12], [24, -8], [34, -8], [44, -12], [52, -20], [58, -30], [54, -40], [46, -46], [44, -56], [50, -64], [50, -74], [42, -82], [34, -88], [26, -96], [30, -106], [40, -110]]
+  const pathPts = [[0, 9], [-6, 4], [-10, -3], [-9, -11], [-2, -17], [8, -17], [16, -12], [24, -8], [34, -8], [44, -12], [52, -20], [58, -30], [54, -40], [46, -46], [44, -56], [50, -64], [50, -74], [42, -82], [34, -88], [26, -96], [30, -106], [40, -110], [50, -112], [58, -114]]
     .map(([x, z]) => new T.Vector3(x, 0, z));
   const curve = new T.CatmullRomCurve3(pathPts, false, 'catmullrom', .5);
   const pathSamples = curve.getSpacedPoints(360);
@@ -185,7 +184,7 @@ addEventListener('DOMContentLoaded', () => {   /* 程式檔延後載入，先畫
     return Math.sqrt(best);
   }
   function tNear(x, z) { let best = 1e9, bi = 0; pathSamples.forEach((p, i) => { const d = (p.x - x) ** 2 + (p.z - z) ** 2; if (d < best) { best = d; bi = i; } }); return bi / (pathSamples.length - 1); }
-  const ZONE_C = { grass: new T.Vector3(2, 0, -5), canyon: new T.Vector3(52, 0, -36), volcano: new T.Vector3(34, 0, -98) };
+  const ZONE_C = { grass: new T.Vector3(2, 0, -5), canyon: new T.Vector3(52, 0, -36), volcano: new T.Vector3(44, 0, -106) };
   const zoneW = (x, z) => ({ c: smooth(44, 26, Math.hypot(x - 52, z + 36)) * smooth(-80, -66, z), v: Math.max(smooth(46, 26, Math.hypot(x - 34, z + 100)), smooth(-68, -82, z)) });
   /* 11 個關卡：草原 4、山谷 4、火山 2 + 對戰競技場 */
   const GYMS = [
@@ -194,7 +193,8 @@ addEventListener('DOMContentLoaded', () => {   /* 程式檔延後載入，先畫
     { unit: 4, x: 40, z: -21, roof: '#D2691E', zone: 'canyon' }, { unit: 5, x: 67, z: -25, roof: '#B8860B', zone: 'canyon' },
     { unit: 6, x: 63, z: -47, roof: '#A0522D', zone: 'canyon' }, { unit: 7, x: 35, z: -58, roof: '#CD5C5C', zone: 'canyon' },
     { unit: 8, x: 57, z: -84, roof: '#5A1E1E', zone: 'volcano' }, { unit: 9, x: 21, z: -86, roof: '#3A2A2A', zone: 'volcano' },
-    { unit: 10, x: 37, z: -122, roof: '#8B0000', zone: 'volcano', arena: true }
+    { unit: 10, x: 37, z: -122, roof: '#8B0000', zone: 'volcano', arena: true },
+    { unit: 11, x: 62, z: -124, roof: '#3A1A5A', zone: 'volcano', arena: true, tower: true }
   ].map(g => {
     const at = tNear(g.x, g.z), p = curve.getPointAt(at), pos = new T.Vector3(g.x, 0, g.z);
     const dir = new T.Vector3(p.x - g.x, 0, p.z - g.z).normalize();
@@ -474,6 +474,19 @@ addEventListener('DOMContentLoaded', () => {   /* 程式檔延後載入，先畫
   const volLight = new T.PointLight('#FF6A2B', 60, 90, 1.6); volLight.position.set(VC.x, 48, VC.z); scene.add(volLight);
 
   /* 對戰競技場 */
+  /* 魔王塔 */
+  function bossTower() {
+    const g = new T.Group(), st = mat('#3A2E3E', { flatShading: true }), pur = new T.MeshStandardMaterial({ color: '#B071E0', emissive: '#7A2AC8', emissiveIntensity: 1.6 });
+    const base = mesh(new T.CylinderGeometry(6.5, 7.5, 2, 8), st); base.position.y = 1; g.add(base);
+    const t1 = mesh(new T.CylinderGeometry(3.6, 4.6, 9, 8), st); t1.position.y = 6.5; g.add(t1);
+    const t2 = mesh(new T.CylinderGeometry(2.4, 3.2, 6, 8), mat('#2A1E30', { flatShading: true })); t2.position.y = 14; g.add(t2);
+    const roof = mesh(new T.ConeGeometry(3.6, 5, 8), mat('#5A1E8C', { flatShading: true })); roof.position.y = 19.5; g.add(roof);
+    for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; const sp = mesh(new T.ConeGeometry(.6, 3, 5), st); sp.position.set(Math.cos(a) * 6.6, 3.4, Math.sin(a) * 6.6); g.add(sp);
+      if (i % 2 === 0) { const w = mesh(new T.BoxGeometry(.9, 1.4, .2), pur, false); w.position.set(Math.cos(a) * 3.75, 8, Math.sin(a) * 3.75); w.lookAt(Math.cos(a) * 10, 8, Math.sin(a) * 10); g.add(w); } }
+    const gate = mesh(new T.BoxGeometry(2.6, 3.4, 1.2), mat('#120A18')); gate.position.set(0, 2.2, 4.2); g.add(gate);
+    const glow = new T.PointLight('#B071E0', 30, 26, 1.6); glow.position.set(0, 12, 0); g.add(glow);
+    return g;
+  }
   function arena() {
     const g = new T.Group(), st = mat('#8A7C74', { flatShading: true }), red = mat('#B22222');
     const wall = mesh(new T.CylinderGeometry(8, 8.6, 3.6, 24, 1, true), st); wall.position.y = 1.8; wall.material.side = T.DoubleSide; g.add(wall);
@@ -497,7 +510,7 @@ addEventListener('DOMContentLoaded', () => {   /* 程式檔延後載入，先畫
     G.state = state === 'current' && currentGym !== G ? 'open' : state;
     G.ready = ready; G.name = u.name; G.id = u.id;
 
-    const b = G.arena ? arena() : house({ w: 7, d: 6, h: 3.6, floors: 2, wall: { grass: '#F6EEDD', canyon: '#EFCF9E', volcano: '#8A7C74' }[G.zone], roof: G.roof, gym: true });
+    const b = G.tower ? bossTower() : G.arena ? arena() : house({ w: 7, d: 6, h: 3.6, floors: 2, wall: { grass: '#F6EEDD', canyon: '#EFCF9E', volcano: '#8A7C74' }[G.zone], roof: G.roof, gym: true });
     b.position.set(G.pos.x, height(G.pos.x, G.pos.z) - .2, G.pos.z); b.rotation.y = G.face; b.scale.setScalar(G.arena ? 1 : .82);
     b.traverse(o => { if (o.isMesh) o.userData.gym = G; });
     scene.add(b); pickables.push(b);
@@ -508,7 +521,7 @@ addEventListener('DOMContentLoaded', () => {   /* 程式檔延後載入，先畫
     const crystal = mesh(new T.OctahedronGeometry(.9, 0), new T.MeshStandardMaterial({
       color: crystalColor, emissive: crystalColor, emissiveIntensity: G.state === 'locked' ? .05 : 2.2, roughness: .2, metalness: .3, flatShading: true
     }));
-    crystal.position.set(G.pos.x, G.arena ? 13 : 11.6, G.pos.z); crystal.scale.y = 1.5; scene.add(crystal); G.crystal = crystal;
+    crystal.position.set(G.pos.x, G.tower ? 25 : G.arena ? 13 : 11.6, G.pos.z); crystal.scale.y = 1.5; scene.add(crystal); G.crystal = crystal;
     if (G.state !== 'locked') {
       const halo = new T.Sprite(new T.SpriteMaterial({ map: GLOW, color: crystalColor, transparent: true, blending: T.AdditiveBlending, depthWrite: false }));
       halo.scale.setScalar(6); crystal.add(halo); halo.scale.set(5, 3.4, 1);
@@ -703,7 +716,7 @@ addEventListener('DOMContentLoaded', () => {   /* 程式檔延後載入，先畫
     if (!G.ready) { toast(`「${G.name}」正在製作中，敬請期待！`); return; }
     /* 鏡頭飛到道館門口，再進入關卡 */
     const face = G.face;
-    flying = { t: 0, from: { ...cam, target: cam.target.clone() }, to: { az: face + Math.PI, pol: 1.2, dist: G.arena ? 22 : 14, target: new T.Vector3(G.pos.x, 3, G.pos.z) }, href: G.id === 'battle' ? 'units/battle.html' : 'units/unit' + String(PTCG.UNITS[G.unit].no).padStart(2, '0') + '.html' };
+    flying = { t: 0, from: { ...cam, target: cam.target.clone() }, to: { az: face + Math.PI, pol: 1.2, dist: G.arena ? 22 : 14, target: new T.Vector3(G.pos.x, 3, G.pos.z) }, href: G.id === 'battle' ? 'units/battle.html' : G.id === 'boss' ? 'units/boss.html' : 'units/unit' + String(PTCG.UNITS[G.unit].no).padStart(2, '0') + '.html' };
     document.getElementById('hint').style.opacity = 0;
   }
   let hinted = false;
@@ -802,7 +815,7 @@ addEventListener('DOMContentLoaded', () => {   /* 程式檔延後載入，先畫
 
     /* 道館水晶、光柱 */
     GYMS.forEach((G, i) => {
-      G.crystal.rotation.y = t * .8 + i; G.crystal.position.y = (G.arena ? 13 : 11.6) + Math.sin(t * 1.6 + i) * .35;
+      G.crystal.rotation.y = t * .8 + i; G.crystal.position.y = (G.tower ? 25 : G.arena ? 13 : 11.6) + Math.sin(t * 1.6 + i) * .35;
       if (G.pillar) { G.pillar.material.uniforms.t.value = t; G.ring.rotation.z = t * .8; G.ring.scale.setScalar(1 + Math.sin(t * 3) * .08); }
     });
 
@@ -829,7 +842,7 @@ addEventListener('DOMContentLoaded', () => {   /* 程式檔延後載入，先畫
     if (zonePill.dataset.z !== zn) { zonePill.dataset.z = zn; zonePill.className = 'zone-pill ' + zn; zonePill.textContent = { grass: '🌱 新手草原', canyon: '🏜️ 進階山谷', volcano: '🌋 高手火山' }[zn]; if (typeof PTCGAudio !== 'undefined') PTCGAudio.music({ canyon: 'bgm_canyon', volcano: 'bgm_volcano' }[zn] || 'bgm_grassland'); }
     /* 標籤位置（重疊時往上錯開） */
     const placed = [];
-    GYMS.map(G => { v.set(G.pos.x, G.arena ? 12 : 9.6, G.pos.z).project(camera); return { G, x: (v.x * .5 + .5) * innerWidth, y: (-v.y * .5 + .5) * innerHeight, z: v.z }; })
+    GYMS.map(G => { v.set(G.pos.x, G.tower ? 23 : G.arena ? 12 : 9.6, G.pos.z).project(camera); return { G, x: (v.x * .5 + .5) * innerWidth, y: (-v.y * .5 + .5) * innerHeight, z: v.z }; })
       .sort((a, b) => b.y - a.y)
       .forEach(o => {
         const hidden = o.z > 1 || flying || o.G.pos.distanceTo(cam.target) > 62;
@@ -852,9 +865,9 @@ addEventListener('DOMContentLoaded', () => {   /* 程式檔延後載入，先畫
       if (frames > 20) slowSum += dt;
       if (frames === 110) { checked = true; if (slowSum / 90 > .034) { setQuality('low'); toast('已自動切換為省電畫質'); } }
     }
-    if (frames === 3) { window.__villageOK = true; const L = document.getElementById('loading'); L.style.opacity = 0; setTimeout(() => L.remove(), 800); setTimeout(() => PTCG.guide(/[?&]guide=1/.test(location.search)), 1100); }
+    if (frames === 3) { window.__villageOK = true; const L = document.getElementById('loading'); L.style.opacity = 0; setTimeout(() => L.remove(), 800); }
   });
-});
+}, 30)));
 </script>
 </body>
 </html>

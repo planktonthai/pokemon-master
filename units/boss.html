@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- seo -->
+<meta name="description" content="終極魔王關：五位由弱到強的原創對手，最後挑戰使用超級進化 ex 的終極魔王！">
+<meta name="theme-color" content="#5BA8F5">
+<link rel="icon" type="image/svg+xml" href="../assets/img/icon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/img/icon-32.png">
+<link rel="apple-touch-icon" href="../assets/img/icon-180.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="zh_TW">
+<meta property="og:site_name" content="寶可夢卡牌訓練營">
+<meta property="og:title" content="終極魔王關｜寶可夢卡牌訓練營">
+<meta property="og:description" content="給小學 3～6 年級的寶可夢卡牌遊戲教學：3D 冒險地圖、動畫教學、互動小遊戲和模擬對戰，從新手一路學到高手。">
+<meta property="og:image" content="https://planktonthai.github.io/pokemon-master/assets/img/og.png">
+<meta property="og:url" content="https://planktonthai.github.io/pokemon-master/units/boss.html">
+<link rel="canonical" href="https://planktonthai.github.io/pokemon-master/units/boss.html">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preload" href="../assets/fonts/huninn.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../assets/fonts/notosanstc-900.woff2" as="font" type="font/woff2" crossorigin>
+<!-- /seo -->
+<title>終極魔王關｜寶可夢卡牌訓練營</title>
+<link rel="stylesheet" href="../assets/css/style.min.css">
+<style>
+  html{background:#4A1A2A}
+  body{background:radial-gradient(ellipse at 50% -10%,#6A2A8C 0,transparent 55%),linear-gradient(180deg,#160C24 0%,#2A1438 45%,#4A1A2A 100%) fixed;min-height:100vh}
+  .wrap{max-width:980px}
+  .boss-hero{text-align:center;color:#fff;padding:12px 0 6px;position:relative}
+  .boss-hero h1{margin:0;font-family:'Noto Sans TC';font-weight:900;font-size:clamp(40px,9vw,72px);line-height:1.1;letter-spacing:.06em;
+    background:linear-gradient(110deg,#FFB800 0%,#FFF3B0 40%,#FFFFFF 50%,#FFE680 60%,#E09B00 100%);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(3px 0 0 var(--ink)) drop-shadow(-3px 0 0 var(--ink)) drop-shadow(0 3px 0 var(--ink)) drop-shadow(0 -3px 0 var(--ink)) drop-shadow(0 8px 0 var(--ink)) drop-shadow(0 0 30px rgba(176,113,224,.8));
+    animation:shimmer 4s linear infinite}
+  .boss-hero p{margin:14px auto 0;max-width:34em;font-size:18px;color:#F0E2FF}
+  .meter{display:flex;justify-content:center;gap:10px;margin:18px 0 6px}
+  .meter i{width:44px;height:14px;border-radius:8px;border:3px solid var(--ink);background:#3A2A4A;box-shadow:0 3px 0 var(--ink)}
+  .meter i.on{background:linear-gradient(90deg,#FFE680,#FFB800);box-shadow:0 3px 0 var(--ink),0 0 14px rgba(255,206,58,.9)}
+  .tower{display:flex;flex-direction:column-reverse;gap:16px;margin:22px auto 0;max-width:720px;position:relative}
+  .tower::before{content:"";position:absolute;left:50%;top:20px;bottom:20px;width:8px;margin-left:-4px;background:repeating-linear-gradient(180deg,#FFCE3A 0 12px,transparent 12px 24px);opacity:.5;border-radius:4px}
+  .bcard{--c:#888;position:relative;display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding:14px 16px;border-radius:24px;border:4px solid var(--ink);
+    background:linear-gradient(135deg,color-mix(in srgb,var(--c) 35%,#FFFBF0) 0%,#FFFBF0 60%);box-shadow:0 7px 0 var(--ink);text-align:left;color:var(--ink);transition:transform .25s var(--pop),box-shadow .25s}
+  .bcard:nth-child(odd){margin-right:9%}.bcard:nth-child(even){margin-left:9%}
+  .bcard .face{width:84px;height:84px;border-radius:50%;border:4px solid var(--ink);display:flex;align-items:center;justify-content:center;font-size:46px;
+    background:radial-gradient(circle at 35% 30%,#fff,var(--c));box-shadow:0 5px 0 var(--ink)}
+  .bcard .lvl{display:inline-block;background:var(--ink);color:#fff;border-radius:10px;padding:0 10px;font-size:14px}
+  .bcard h2{margin:2px 0 0;font-size:24px;font-weight:400;line-height:1.25}
+  .bcard .ttl{font-size:14px;color:#5A5070}
+  .bcard q{display:block;font-size:15px;margin-top:4px;color:#3A3050}
+  .bcard .go{white-space:nowrap}
+  .bcard.locked{filter:grayscale(.85) brightness(.75)}
+  .bcard.locked .face{font-size:34px}
+  .bcard.beaten::after{content:"✔ 已擊敗";position:absolute;right:-8px;top:-14px;background:var(--grass);color:#fff;border:3px solid var(--ink);border-radius:12px;padding:0 10px;font-size:14px;transform:rotate(6deg)}
+  .bcard.next{animation:bossGlow 1.8s ease-in-out infinite}
+  @keyframes bossGlow{50%{box-shadow:0 7px 0 var(--ink),0 0 30px 8px color-mix(in srgb,var(--c) 70%,#fff)}}
+  .bcard.final{border-width:5px;background:linear-gradient(135deg,#E8D4FF 0%,#FFF6C8 55%,#FFFBF0 100%)}
+  .bcard.final .face{width:104px;height:104px;font-size:58px;background:radial-gradient(circle at 35% 30%,#FFF3B0,#B071E0 60%,#3A1A5A)}
+  .champ{display:none;margin:26px auto 0;max-width:600px;text-align:center;background:linear-gradient(180deg,#FFF6C8,#FFCE3A);border:4px solid var(--ink);border-radius:24px;box-shadow:0 7px 0 var(--ink),0 0 40px rgba(255,206,58,.7);padding:16px;font-size:20px}
+  .champ.show{display:block;animation:popIn .7s var(--pop)}
+  .champ b{display:block;font-family:'Noto Sans TC';font-weight:900;font-size:34px}
+  .tips{margin-top:26px}
+  @media (max-width:600px){ .bcard{grid-template-columns:auto 1fr;margin:0 !important} .bcard .go{grid-column:1/3;justify-content:center} .bcard .face{width:64px;height:64px;font-size:34px} .bcard.final .face{width:76px;height:76px;font-size:42px} .tower::before{display:none} }
+</style>
+<script src="../assets/js/audio.js"></script>
+<script src="../assets/js/common.js"></script>
+</head>
+<body data-zone="volcano" data-bgm="bgm_battle">
+<div class="wrap">
+  <div class="topbar">
+    <a class="btn" href="../index.html?zone=volcano">🗺 回地圖</a>
+    <span class="star-pill" aria-live="polite"></span>
+  </div>
+  <header class="boss-hero">
+    <h1>終極魔王關</h1>
+    <p>五位對手一個比一個強！打敗前一位，才能挑戰下一位。站在塔頂的，是會用「超級進化 ex」的終極魔王……</p>
+    <div class="meter" id="meter" aria-label="擊敗進度"></div>
+  </header>
+  <main class="tower" id="tower" aria-label="魔王名單（由下往上越來越強）"></main>
+  <div class="champ" id="champ" role="status"><b>👑 卡牌大師</b>你打敗了全部五位魔王！你就是真正的卡牌大師！</div>
+  <section class="lesson tips">
+    <h2><span class="no">💡</span>挑戰小秘訣</h2>
+    <ul style="margin:0;padding-left:1.3em;line-height:1.9">
+      <li>選一副能打對手<b>弱點</b>的牌組：雷屬性打水屬性、火屬性打草屬性，傷害 ×2！</li>
+      <li>每回合都要附能量，還要在備戰區培養「接班人」。</li>
+      <li>從四天王開始，對手會<b>撤退保護</b>重要的寶可夢，也會用老大的指令收割你備戰區快昏厥的寶可夢。</li>
+      <li><b>魔王特權</b>：四天王開局多抽 2 張手牌、終極魔王多抽 3 張，所以牠們更快準備好。你要更專心規劃每一回合！</li>
+      <li>終極魔王的超級進化 ex 有 330 HP，但擊倒牠可以一口氣拿 <b>3 張</b>獎賞卡！</li>
+    </ul>
+  </section>
+</div>
+<script>
+(() => {
+  PTCG.clouds();
+  PTCG.starPill(document.querySelector('.star-pill'));
+  const beaten = PTCG.bossBeaten();
+  document.getElementById('meter').innerHTML = PTCG.BOSSES.map(b => `<i class="${b.no <= beaten ? 'on' : ''}" title="${b.name}"></i>`).join('');
+  document.getElementById('tower').innerHTML = PTCG.BOSSES.map(b => {
+    const open = PTCG.bossUnlocked(b.no), done = b.no <= beaten, next = open && !done;
+    return `<article class="bcard ${open ? '' : 'locked'} ${done ? 'beaten' : ''} ${next ? 'next' : ''} ${b.no === 5 ? 'final' : ''}" style="--c:${b.color}">
+      <div class="face" aria-hidden="true">${open ? b.icon : '🔒'}</div>
+      <div><span class="lvl">第 ${b.no} 戰・D${b.lv}</span><h2>${open ? b.name : '？？？'}</h2><div class="ttl">${open ? b.title : '打敗前一位才會現身'}</div>${open ? `<q>${b.intro}</q>` : ''}</div>
+      ${open ? `<a class="btn ${next ? 'berry' : 'sun'} go" href="battle.html?boss=${b.no}">⚔️ ${done ? '再戰' : '挑戰'}</a>` : `<span class="btn go" aria-disabled="true" style="opacity:.6">🔒 未解鎖</span>`}
+    </article>`;
+  }).join('');
+  const nx = document.querySelector('.bcard.next'); if (nx && innerWidth < 760) setTimeout(() => nx.scrollIntoView({ behavior: 'smooth', block: 'center' }), 500);
+  if (beaten >= 5) { document.getElementById('champ').classList.add('show'); setTimeout(() => PTCG.confetti(100), 600); }
+})();
+</script>
+</body>
+</html>
