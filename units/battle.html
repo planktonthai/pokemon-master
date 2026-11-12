@@ -22,9 +22,10 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="../assets/fonts/huninn.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="../assets/fonts/notosanstc-900.woff2" as="font" type="font/woff2" crossorigin>
+<script id="swfix">try{var w=navigator.serviceWorker;if(w&&w.controller)w.addEventListener("controllerchange",function(){if(typeof PTCG==="undefined"||PTCG.BUILD!=="fd4d826b")location.reload()})}catch(e){}</script>
 <!-- /seo -->
 <title>模擬對戰｜寶可夢卡牌訓練營</title>
-<link rel="stylesheet" href="../assets/css/style.min.css">
+<link rel="stylesheet" href="../assets/css/style.min.css?v=fd4d826b">
 <style>
   body{background:linear-gradient(180deg,#2A1E2E,#4A2A2A 40%,#6A3A2A)}
   .wrap{max-width:1100px;padding:10px 10px calc(var(--hand-h,170px) + 24px);position:relative;z-index:1}
@@ -164,11 +165,11 @@
 </head>
 <body data-bgm="bgm_battle" data-zone="volcano">
 <div class="wrap">
-  <div class="topbar">
+  <nav class="topbar" aria-label="網站導覽">
     <a class="btn" href="../index.html?zone=volcano" id="backBtn">🗺 回地圖</a>
     <h1 id="pageTitle">⚔️ 模擬對戰</h1>
     <span class="star-pill" aria-live="polite"></span>
-  </div>
+  </nav>
   <div id="board">
     <div class="field">
       <section class="side" id="ai" aria-label="電腦的場地">
@@ -195,9 +196,9 @@
 <div id="modal" role="dialog" aria-modal="true"></div>
 <div id="coin" aria-hidden="true"><div class="coin">?</div><p></p></div>
 
-<script src="../assets/js/audio.js"></script>
-<script src="../assets/js/common.js"></script>
+<script src="../assets/js/audio.js?v=fd4d826b"></script>
+<script src="../assets/js/common.js?v=fd4d826b"></script>
 <script>PTCG.starPill(document.querySelector('.star-pill'));</script>
-<script src="../assets/js/battle.js"></script>
+<script src="../assets/js/battle.js?v=fd4d826b"></script>
 </body>
 </html>

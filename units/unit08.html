@@ -22,9 +22,10 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="../assets/fonts/huninn.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="../assets/fonts/notosanstc-900.woff2" as="font" type="font/woff2" crossorigin>
+<script id="swfix">try{var w=navigator.serviceWorker;if(w&&w.controller)w.addEventListener("controllerchange",function(){if(typeof PTCG==="undefined"||PTCG.BUILD!=="fd4d826b")location.reload()})}catch(e){}</script>
 <!-- /seo -->
 <title>第 8 關：獲勝條件｜寶可夢卡牌訓練營</title>
-<link rel="stylesheet" href="../assets/css/style.min.css">
+<link rel="stylesheet" href="../assets/css/style.min.css?v=fd4d826b">
 <style>
   .win3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:780px}
   .win3 .w{background:#fff;border:3px solid var(--ink);border-radius:18px;box-shadow:0 5px 0 var(--ink);padding:12px;text-align:center;opacity:.25;transition:opacity .5s,transform .5s var(--pop)}
@@ -44,15 +45,16 @@
 </head>
 <body data-bgm="bgm_canyon" data-zone="canyon">
 <div class="wrap">
-  <div class="topbar">
+  <nav class="topbar" aria-label="網站導覽">
     <a class="btn" href="../index.html?zone=canyon">🗺 回地圖</a>
     <span class="star-pill" aria-live="polite"></span>
-  </div>
+  </nav>
   <header class="unit-head">
     <span class="tag" style="background:var(--canyon)">進階山谷・第 8 關</span>
     <h1>獲勝條件</h1>
     <p>比賽有三種獲勝方式！學會計算獎賞卡，就知道還差多少才能贏。</p>
   </header>
+  <main>
 
   <section class="lesson" id="L1" data-partner="cloud" data-intro="怎麼樣才算贏呢？有三種方法！">
     <h2><span class="no">1</span>三種獲勝方式</h2>
@@ -77,10 +79,11 @@
     <h2><span class="no">★</span>過關小測驗</h2>
     <div class="quiz" id="quiz"></div>
   </section>
+  </main>
 </div>
 
-<script src="../assets/js/audio.js"></script>
-<script src="../assets/js/common.js"></script>
+<script src="../assets/js/audio.js?v=fd4d826b"></script>
+<script src="../assets/js/common.js?v=fd4d826b"></script>
 <script>
 (() => {
   const { card, mini, sparkle, restart, Player } = PTCG;

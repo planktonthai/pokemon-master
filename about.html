@@ -22,9 +22,10 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="assets/fonts/huninn.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/notosanstc-900.woff2" as="font" type="font/woff2" crossorigin>
+<script id="swfix">try{var w=navigator.serviceWorker;if(w&&w.controller)w.addEventListener("controllerchange",function(){if(typeof PTCG==="undefined"||PTCG.BUILD!=="fd4d826b")location.reload()})}catch(e){}</script>
 <!-- /seo -->
 <title>關於本站・給家長與老師｜寶可夢卡牌訓練營</title>
-<link rel="stylesheet" href="assets/css/style.min.css">
+<link rel="stylesheet" href="assets/css/style.min.css?v=fd4d826b">
 <style>
   .lesson ul,.lesson ol{margin:6px 0 4px;padding-left:1.4em;line-height:1.9}
   .goal{width:100%;border-collapse:separate;border-spacing:0;border:3px solid var(--ink);border-radius:16px;overflow:hidden;background:#fff;font-size:16px}
@@ -37,14 +38,33 @@
   .partners-row{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;margin:8px 0}
   .partners-row figure{margin:0;text-align:center;font-size:16px}
   .partners-row .avatar{width:92px;height:92px}
+  /* ---- 學習報告 ---- */
+  .rp-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:6px 0 14px}
+  .rp-sum div{background:#fff;border:3px solid var(--ink);border-radius:16px;padding:8px 6px;text-align:center;font-size:15px}
+  .rp-sum b{display:block;font-family:'Noto Sans TC';font-weight:900;font-size:28px;line-height:1.15}
+  .rp-st{white-space:nowrap}
+  .rp-tag{display:inline-block;border:2px solid var(--ink);border-radius:10px;padding:0 8px;font-size:14px;white-space:nowrap}
+  .rp-tag.full{background:#FFE680}.rp-tag.pass{background:#C0DD97}.rp-tag.todo{background:#EEECE6}
+  .rp-tips{background:#FFF6D6;border:3px solid var(--ink);border-radius:16px;padding:10px 16px;margin:14px 0}
+  .rp-tips h3{margin:0 0 4px;font-size:18px}
+  .rp-btns{display:flex;gap:10px;flex-wrap:wrap}
+  @media (max-width:560px){ .rp-sum{grid-template-columns:1fr 1fr} }
+  #printArea{display:none}
+  @media print{
+    html,body{background:#fff!important}
+    body.print-one>*:not(#printArea){display:none!important}
+    #printArea{display:block;padding:0 8mm}
+    #printArea .lesson{box-shadow:none;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    #printArea .rp-btns{display:none}
+  }
 </style>
 </head>
 <body data-zone="grass">
 <div class="wrap">
-  <div class="topbar">
+  <nav class="topbar" aria-label="網站導覽">
     <a class="btn" href="index.html">🗺 回地圖</a>
     <span class="star-pill" aria-live="polite"></span>
-  </div>
+  </nav>
 
   <header class="unit-head">
     <span class="tag">關於本站</span>
@@ -87,8 +107,17 @@
       <p><button class="btn berry" id="reset">🧹 重置這台裝置的學習進度</button></p>
     </section>
 
+    <section class="lesson" id="report">
+      <h2><span class="no">3</span>學習進度報告</h2>
+      <p>這是這台裝置上的學習紀錄，可以列印，或複製成文字傳給老師。</p>
+      <div class="rp-sum" id="rpSum"></div>
+      <div class="tablewrap"><table class="goal" id="rpTable"></table></div>
+      <div class="rp-tips" id="rpTips"></div>
+      <div class="rp-btns"><button class="btn" id="rpCopy">📋 複製文字報告</button><button class="btn" id="rpPrint">🖨 列印報告</button><span id="rpMsg" role="status" style="align-self:center"></span></div>
+    </section>
+
     <section class="lesson">
-      <h2><span class="no">3</span>製作與授權</h2>
+      <h2><span class="no">4</span>製作與授權</h2>
       <ul>
         <li>背景音樂（草原、山谷、火山、對戰）與全部音效：本站以程式合成的原創作品。</li>
         <li>夥伴小怪獸「雲朵棉棉」「燈籠果果」「泡泡蝸」、3D 世界與卡背：本站原創設計。</li>
@@ -99,13 +128,13 @@
     </section>
 
     <section class="lesson">
-      <h2><span class="no">4</span>聲明</h2>
+      <h2><span class="no">5</span>聲明</h2>
       <p>本站是非官方的粉絲教學網站，與任天堂（Nintendo）、Creatures、GAME FREAK、寶可夢公司（The Pokémon Company）無任何關係，也未獲得其授權或贊助。「寶可夢」及相關名稱的權利屬於各權利人。本站不販售任何商品。</p>
     </section>
   </main>
 </div>
-<script src="assets/js/audio.js"></script>
-<script src="assets/js/common.js"></script>
+<script src="assets/js/audio.js?v=fd4d826b"></script>
+<script src="assets/js/common.js?v=fd4d826b"></script>
 <script>
   PTCG.clouds();
   PTCG.starPill(document.querySelector('.star-pill'));
@@ -113,10 +142,52 @@
   document.getElementById('replayIntro').onclick = () => PTCG.onboarding(true);
   document.getElementById('reset').onclick = () => {
     if (!confirm('確定要清除這台裝置上的所有星星和進度嗎？這個動作無法復原。')) return;
-    try { localStorage.removeItem('ptcg-camp-progress-v1'); localStorage.removeItem('ptcg-camp-unlock-all'); localStorage.removeItem('ptcg-camp-boss-v1'); localStorage.removeItem('ptcg-camp-stats-v1'); } catch (e) { /* 略過 */ }
-    PTCG.starPill(document.querySelector('.star-pill'));
+    try { localStorage.removeItem('ptcg-camp-progress-v1'); localStorage.removeItem('ptcg-camp-unlock-all'); localStorage.removeItem('ptcg-camp-boss-v1'); localStorage.removeItem('ptcg-camp-stats-v1'); localStorage.removeItem('ptcg-camp-name-v1'); } catch (e) { /* 略過 */ }
+    PTCG.starPill(document.querySelector('.star-pill')); report();
     alert('已經重置完成！');
   };
+  /* ---- 學習進度報告 ---- */
+  function report() {
+    const U = PTCG.UNITS, lessons = U.filter(u => /^u\d/.test(u.id)), st = id => PTCG.getStars(id);
+    const TOPIC = { u1: '三種卡牌、卡片上的資訊', u2: '場地的五個區域', u3: '開局準備、重抽', u4: '回合流程、先攻限制', u5: '傷害計算（弱點、抗性）', u6: '進化規則', u7: '五種特殊狀態', u8: '三種獲勝方式', u9: '組牌規則與比例', u10: '回合規劃與策略' };
+    const stats = PTCG.getStats(), beaten = PTCG.bossBeaten();
+    const done = lessons.filter(u => st(u.id) > 0), full = lessons.filter(u => st(u.id) === 3);
+    const sum = o => Object.values(o).reduce((a, b) => a + b, 0), wins = sum(stats.won), played = sum(stats.played);
+    const stars = lessons.reduce((a, u) => a + st(u.id), 0);
+    const href = u => 'units/unit' + String(u.no).padStart(2, '0') + '.html';
+    document.getElementById('rpSum').innerHTML = `<div><b>${done.length}/${lessons.length}</b>關卡完成</div><div><b>${stars}/${lessons.length * 3}</b>關卡星星</div><div><b>${wins}/${played}</b>對戰勝場</div><div><b>${beaten}/5</b>擊敗魔王</div>`;
+    const tag = n => n === 3 ? '<span class="rp-tag full">滿星</span>' : n ? '<span class="rp-tag pass">已過關</span>' : '<span class="rp-tag todo">還沒完成</span>';
+    document.getElementById('rpTable').innerHTML = '<thead><tr><th>關卡</th><th>學習重點</th><th>狀態</th></tr></thead><tbody>' + lessons.map(u =>
+      `<tr><td>${u.no}. ${u.name}</td><td>${TOPIC[u.id]}</td><td class="rp-st">${tag(st(u.id))} <span aria-label="${st(u.id)} 顆星">${'★'.repeat(st(u.id))}${'☆'.repeat(3 - st(u.id))}</span></td></tr>`).join('') + '</tbody>';
+    const tips = [];
+    const next = lessons.find(u => !st(u.id)), weak = lessons.filter(u => st(u.id) === 1);
+    if (!done.length) tips.push(`還沒開始：可以先陪孩子看<a href="${href(lessons[0])}">第 1 關「${lessons[0].name}」</a>的動畫，大約 10 分鐘。`);
+    else if (next) tips.push(`下一步：<a href="${href(next)}">第 ${next.no} 關「${next.name}」</a>，會學到${TOPIC[next.id]}。`);
+    if (weak.length) tips.push(`可以一起複習：${weak.map(u => `<a href="${href(u)}">第 ${u.no} 關（${TOPIC[u.id]}）</a>`).join('、')}。這幾關只拿到 1 顆星，重看動畫後再答一次測驗，通常就能進步。`);
+    if (!next && !played) tips.push('規則都學完了！下一步可以到<a href="units/battle.html">模擬對戰</a>，用完整規則和電腦比一場。');
+    else if (!next && beaten < 5) tips.push(`已經可以挑戰<a href="units/boss.html">終極魔王關</a>：目前打敗 ${beaten} / 5 位魔王。輸了也沒關係，可以和孩子聊聊「剛剛哪一步可以換個做法」。`);
+    if (!next && beaten >= 5) tips.push('全部完成了！可以到<a href="achievements.html">成就頁</a>列印卡牌大師證書，鼓勵一下孩子。');
+    if (done.length && full.length < done.length && !weak.length && next === undefined) tips.push('想挑戰滿星的話，可以回到沒有三星的關卡再答一次測驗。');
+    document.getElementById('rpTips').innerHTML = '<h3>💡 建議</h3><ul>' + tips.map(t => `<li>${t}</li>`).join('') + '</ul>';
+    report.text = () => {
+      const d = new Date();
+      return [`【寶可夢卡牌訓練營 學習報告】${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`,
+        `完成關卡：${done.length} / ${lessons.length}　星星：${stars} / ${lessons.length * 3}`,
+        `對戰：${played} 場，贏 ${wins} 場　終極魔王：打敗 ${beaten} / 5 位`, '',
+        ...lessons.map(u => `${u.no}. ${u.name}：${st(u.id) ? '★'.repeat(st(u.id)) + '☆'.repeat(3 - st(u.id)) : '還沒完成'}　學習重點：${TOPIC[u.id]}`), '',
+        ...tips.map(t => '・' + t.replace(/<[^>]+>/g, ''))].join('\n');
+    };
+  }
+  report();
+  const msg = t => { const m = document.getElementById('rpMsg'); m.textContent = t; setTimeout(() => { m.textContent = ''; }, 3000); };
+  document.getElementById('rpCopy').onclick = () => {
+    const t = report.text();
+    (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => msg('✅ 已複製，可以貼到 LINE 或訊息裡'), () => {
+      const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); msg('✅ 已複製'); } catch (e) { msg('無法複製，請改用列印'); } ta.remove();
+    });
+  };
+  document.getElementById('rpPrint').onclick = () => PTCG.printOnly(document.getElementById('report'));
 </script>
 </body>
 </html>

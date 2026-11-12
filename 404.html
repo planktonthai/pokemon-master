@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<base href="/pokemon-master/">
+<meta name="robots" content="noindex">
+<!-- seo -->
+<meta name="theme-color" content="#5BA8F5">
+<link rel="icon" type="image/svg+xml" href="assets/img/icon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/img/icon-32.png">
+<link rel="preload" href="assets/fonts/huninn.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/notosanstc-900.woff2" as="font" type="font/woff2" crossorigin>
+<script id="swfix">try{var w=navigator.serviceWorker;if(w&&w.controller)w.addEventListener("controllerchange",function(){if(typeof PTCG==="undefined"||PTCG.BUILD!=="fd4d826b")location.reload()})}catch(e){}</script>
+<!-- /seo -->
+<title>迷路了！｜寶可夢卡牌訓練營</title>
+<link rel="stylesheet" href="assets/css/style.min.css?v=fd4d826b">
+<style>
+  .lost{min-height:78vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;padding:20px 0}
+  .lost .num{font-family:'Noto Sans TC';font-weight:900;font-size:clamp(72px,20vw,150px);line-height:1;color:var(--sun);-webkit-text-stroke:5px var(--ink);paint-order:stroke fill;text-shadow:0 8px 0 var(--ink);letter-spacing:4px}
+  .lost .avatar{width:130px;height:130px}
+  .lost h1{margin:6px 0 0;font-size:clamp(26px,6vw,38px)}
+  .lost p{margin:0;font-size:19px;line-height:1.7;max-width:30em;text-wrap:balance}
+  .lost .row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:10px}
+  .lost .q{display:inline-block;animation:qbob 1.6s ease-in-out infinite}
+  @keyframes qbob{50%{transform:translateY(-8px) rotate(8deg)}}
+  @media (prefers-reduced-motion:reduce){.lost .q{animation:none}}
+</style>
+<script src="assets/js/audio.js?v=fd4d826b"></script>
+<script src="assets/js/common.js?v=fd4d826b"></script>
+</head>
+<body data-zone="grass">
+<div class="wrap">
+  <main class="lost">
+    <div class="num" aria-hidden="true">4<span class="q">?</span>4</div>
+    <div id="buddy"></div>
+    <h1>哎呀，迷路了！</h1>
+    <p>這條路好像不存在，可能是網址打錯了，或是這一頁搬家了。<br>跟著夥伴回到地圖，繼續你的冒險吧！</p>
+    <div class="row">
+      <a class="btn sun" href="./">🗺 回到冒險地圖</a>
+      <a class="btn" href="achievements.html">🏆 看看我的成就</a>
+    </div>
+  </main>
+</div>
+<script>
+  PTCG.clouds();
+  const k = ['cloud', 'fruit', 'snail'][Math.random() * 3 | 0];
+  document.getElementById('buddy').innerHTML = PTCG.avatar(k, 'big comfort');
+  document.title = '迷路了！｜寶可夢卡牌訓練營';
+</script>
+</body>
+</html>

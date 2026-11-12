@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://planktonthai.github.io/pokemon-master/sitemap.xml

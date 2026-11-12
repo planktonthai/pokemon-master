@@ -22,16 +22,17 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="assets/fonts/huninn.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/notosanstc-900.woff2" as="font" type="font/woff2" crossorigin>
+<script id="swfix">try{var w=navigator.serviceWorker;if(w&&w.controller)w.addEventListener("controllerchange",function(){if(typeof PTCG==="undefined"||PTCG.BUILD!=="fd4d826b")location.reload()})}catch(e){}</script>
 <!-- /seo -->
 <title>寶可夢卡牌訓練營</title>
-<link rel="stylesheet" href="assets/css/style.min.css">
+<link rel="stylesheet" href="assets/css/style.min.css?v=fd4d826b">
 </head>
 <body>
 <div class="wrap">
-  <div class="topbar">
-    <span style="display:flex;gap:8px"><a class="btn" href="about.html" aria-label="關於本站" title="關於本站・給家長與老師">ℹ️ 關於</a><a class="btn" href="achievements.html" aria-label="成就與戰績">🏆 成就</a></span>
+  <nav class="topbar" aria-label="網站導覽">
+    <span style="display:flex;gap:8px"><a class="btn" href="about.html" title="關於本站・給家長與老師">ℹ️ 關於</a><a class="btn" href="achievements.html" aria-label="成就與戰績">🏆 成就</a></span>
     <span class="star-pill" aria-live="polite"></span>
-  </div>
+  </nav>
 
   <header class="hero">
     <div class="hero3d" id="hero3d"></div>
@@ -63,8 +64,8 @@
 </div>
 <div class="toast" id="toast" role="status"></div>
 
-<script src="assets/js/audio.js"></script>
-<script src="assets/js/common.js"></script>
+<script src="assets/js/audio.js?v=fd4d826b"></script>
+<script src="assets/js/common.js?v=fd4d826b"></script>
 <script>
 (() => {
   PTCG.clouds();

@@ -42,7 +42,7 @@ a{color:inherit}
 /* 貼紙按鈕 */
 .btn{
   display:inline-flex;align-items:center;gap:8px;
-  font-size:18px;padding:10px 20px;
+  font-size:18px;line-height:1.3;padding:10px 20px;
   background:#fff;border:3px solid var(--ink);border-radius:16px;
   box-shadow:0 5px 0 var(--ink);cursor:pointer;
   transition:transform .12s,box-shadow .12s;text-decoration:none;

@@ -22,9 +22,10 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="assets/fonts/huninn.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/notosanstc-900.woff2" as="font" type="font/woff2" crossorigin>
+<script id="swfix">try{var w=navigator.serviceWorker;if(w&&w.controller)w.addEventListener("controllerchange",function(){if(typeof PTCG==="undefined"||PTCG.BUILD!=="fd4d826b")location.reload()})}catch(e){}</script>
 <!-- /seo -->
 <title>成就與戰績｜寶可夢卡牌訓練營</title>
-<link rel="stylesheet" href="assets/css/style.min.css">
+<link rel="stylesheet" href="assets/css/style.min.css?v=fd4d826b">
 <style>
   .hero-stat{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
   .hs{background:#fff;border:4px solid var(--ink);border-radius:22px;box-shadow:0 6px 0 var(--ink);padding:12px;text-align:center}
@@ -53,16 +54,47 @@
   .bar i{display:block;height:100%;background:linear-gradient(90deg,#5CC75A,#9BE07A)}
   .tablewrap{overflow-x:auto}
   @media (max-width:560px){ .badges{grid-template-columns:1fr 1fr;gap:10px} .badge .medal{width:60px;height:60px;font-size:30px} .hero-stat{grid-template-columns:1fr 1fr 1fr;gap:6px} .hs b{font-size:28px} .hs{padding:8px 4px;font-size:13px} }
+  /* ---- 結業證書 ---- */
+  .cert-pick{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 12px}
+  .cert-pick .btn[aria-pressed=true]{background:var(--sun)}
+  .cert-pick .btn[aria-disabled=true]{opacity:.55;cursor:not-allowed}
+  .cert-form{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:12px 0 0}
+  .cert-form label{font-size:17px}
+  .cert-form input{font:inherit;font-size:18px;padding:8px 12px;border:3px solid var(--ink);border-radius:14px;width:12em;max-width:100%;background:#fff;color:var(--ink)}
+  .cert-wrap{overflow:hidden}
+  .cert{position:relative;aspect-ratio:297/210;width:100%;max-width:760px;margin:0 auto;container-type:inline-size;background:#FFFBF0;border:6px solid var(--ink);border-radius:18px;color:var(--ink);text-align:center;overflow:hidden;
+    background-image:radial-gradient(circle at 12% 18%,#FFF1B8 0 9%,transparent 9.5%),radial-gradient(circle at 90% 85%,#D8F1FF 0 12%,transparent 12.5%),radial-gradient(circle at 88% 12%,#FFE0E4 0 6%,transparent 6.5%)}
+  .cert::before{content:"";position:absolute;inset:2.2cqw;border:.5cqw dashed var(--c,#E0A800);border-radius:2cqw;pointer-events:none}
+  .cert .c-in{position:absolute;inset:4.5cqw 6cqw;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.2cqw}
+  .cert .c-kick{font-size:2.4cqw;letter-spacing:.6cqw}
+  .cert .c-title{font-family:'Noto Sans TC';font-weight:900;font-size:6.4cqw;line-height:1.1;margin:0;color:var(--c,#E0A800);-webkit-text-stroke:.25cqw var(--ink);paint-order:stroke fill}
+  .cert .c-name{font-size:5.4cqw;line-height:1.2;min-width:40%;border-bottom:.4cqw solid var(--ink);padding:0 3cqw .4cqw;margin-top:1cqw}
+  .cert .c-name.empty{color:#9A968A}
+  .cert .c-body{font-size:max(2.6cqw,10px);line-height:1.6;max-width:80%}
+  .cert .c-row{display:flex;gap:2cqw;justify-content:center;align-items:flex-end}
+  .cert .c-row .avatar{width:9cqw;height:9cqw}
+  .cert .c-foot{display:flex;justify-content:space-between;width:100%;font-size:2.1cqw;align-items:flex-end}
+  .cert .c-seal{width:12cqw;height:12cqw;border-radius:50%;border:.5cqw solid var(--ink);display:flex;align-items:center;justify-content:center;font-size:6cqw;background:radial-gradient(circle at 35% 30%,#FFF6C8,var(--c,#FFCE3A) 70%);box-shadow:0 .6cqw 0 var(--ink)}
+  .cert-lock{text-align:center;padding:26px 14px;border:3px dashed #A8A498;border-radius:18px;background:#F6F3EA;font-size:17px;line-height:1.7}
+  @media print{
+    @page{size:A4 landscape;margin:0}
+    html,body{background:#fff!important;margin:0}
+    body.print-one>*:not(#printArea){display:none!important}
+    #printArea .cert{width:297mm;height:210mm;max-width:none;border-radius:0;margin:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    #printArea .avatar *{animation:none!important}
+  }
+  #printArea{display:none}
+  @media print{#printArea{display:block}}
 </style>
-<script src="assets/js/audio.js"></script>
-<script src="assets/js/common.js"></script>
+<script src="assets/js/audio.js?v=fd4d826b"></script>
+<script src="assets/js/common.js?v=fd4d826b"></script>
 </head>
 <body data-zone="grass">
 <div class="wrap">
-  <div class="topbar">
+  <nav class="topbar" aria-label="網站導覽">
     <a class="btn" href="index.html">🗺 回地圖</a>
     <span class="star-pill" aria-live="polite"></span>
-  </div>
+  </nav>
   <header class="unit-head">
     <span class="tag" style="background:var(--sun);color:var(--ink)">成就</span>
     <h1>🏆 成就與戰績</h1>
@@ -74,6 +106,10 @@
     <section class="lesson"><h2><span class="no">⭐</span>每一關的星星</h2><div class="tablewrap"><table class="stars-table" id="starsTable"></table></div></section>
     <section class="lesson"><h2><span class="no">⚔️</span>對戰戰績</h2><div class="tablewrap"><table class="stat-table" id="statTable"></table></div>
       <p style="margin:10px 0 0;font-size:15px">D1～D3 在「模擬對戰」選擇；D4、D5 在「終極魔王關」。</p></section>
+    <section class="lesson" id="certSec"><h2><span class="no">🎓</span>我的證書</h2>
+      <div class="cert-pick" role="group" aria-label="選擇證書" id="certPick"></div>
+      <div class="cert-wrap" id="certBox"></div>
+    </section>
   </main>
 </div>
 <script>
@@ -110,6 +146,49 @@
     const p = stats.played[i + 1] || 0, w = stats.won[i + 1] || 0, r = p ? Math.round(w / p * 100) : 0;
     return `<tr><td>${n}</td><td>${p}</td><td>${w}</td><td><div style="display:flex;align-items:center;gap:8px"><div class="bar"><i style="width:${r}%"></i></div>${p ? r + '%' : '—'}</div></td></tr>`;
   }).join('') + '</tbody>';
+  /* ---- 證書：完成 10 關 → 結業證書；打敗 5 位魔王 → 卡牌大師證書 ---- */
+  const NAME_KEY = 'ptcg-camp-name-v1';
+  const getName = () => { try { return localStorage.getItem(NAME_KEY) || ''; } catch (e) { return ''; } };
+  const done = lessons.filter(u => st(u.id) > 0).length;
+  const lessonStars = lessons.reduce((a, u) => a + st(u.id), 0);
+  const CERTS = [
+    { k: 'camp', icon: '🎓', btn: '🎓 訓練營結業證書', title: '訓練營結業證書', color: '#E0A800', got: done === lessons.length,
+      need: `完成全部 ${lessons.length} 關就能拿到（目前 ${done} / ${lessons.length} 關）`,
+      body: n => `完成了寶可夢卡牌訓練營全部 ${lessons.length} 個關卡，共獲得 <b>${lessonStars}</b> 顆星星，學會了卡牌遊戲的規則。特頒此證，以資鼓勵！` },
+    { k: 'master', icon: '👑', btn: '👑 卡牌大師證書', title: '卡牌大師證書', color: '#8A4FD0', got: beaten >= 5,
+      need: `打敗終極魔王關全部 5 位魔王就能拿到（目前 ${beaten} / 5 位）`,
+      body: n => `在終極魔王關連續打敗五位對手，最後擊敗了「終極魔王・暗影卡皇」，證明了自己的實力。特頒此證，你就是真正的卡牌大師！` }
+  ];
+  let pick = CERTS.find(c => c.got) ? CERTS.filter(c => c.got).pop().k : 'camp';
+  const today = new Date(), dateTxt = `${today.getFullYear()} 年 ${today.getMonth() + 1} 月 ${today.getDate()} 日`;
+  const esc = t => t.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  function drawCert() {
+    const c = CERTS.find(x => x.k === pick);
+    document.getElementById('certPick').innerHTML = CERTS.map(x => `<button class="btn" data-k="${x.k}" aria-pressed="${x.k === pick}">${x.btn}${x.got ? '' : ' 🔒'}</button>`).join('');
+    const box = document.getElementById('certBox');
+    if (!c.got) { box.innerHTML = `<div class="cert-lock"><div style="font-size:44px" aria-hidden="true">🔒</div><b>${c.title}</b><br>${c.need}</div>`; return; }
+    const nm = getName();
+    box.innerHTML = `<div class="cert" id="cert" style="--c:${c.color}" role="img" aria-label="${c.title}：${nm ? esc(nm) : '尚未填寫名字'}">
+        <div class="c-in">
+          <div class="c-kick">寶可夢卡牌訓練營</div>
+          <h3 class="c-title">${c.title}</h3>
+          <div class="c-name${nm ? '' : ' empty'}" id="certName">${nm ? esc(nm) : '（在下面寫上你的名字）'}</div>
+          <div class="c-body">${c.body(nm)}</div>
+          <div class="c-foot"><span>頒發日期：${dateTxt}</span><span class="c-row" aria-hidden="true">${['cloud', 'fruit', 'snail'].map(k => PTCG.avatar(k, 'happy')).join('')}</span><span class="c-seal" aria-hidden="true">${c.icon}</span></div>
+        </div></div>
+      <div class="cert-form"><label for="certIn">名字：</label><input id="certIn" maxlength="12" autocomplete="off" value="${esc(nm)}" placeholder="寫上你的名字">
+        <button class="btn grass" id="certPrint">🖨 列印證書</button></div>
+      <p style="font-size:15px;margin:8px 0 0">列印時請選擇「橫向」，也可以在列印視窗選「另存為 PDF」。</p>`;
+    const inp = document.getElementById('certIn'), out = document.getElementById('certName');
+    inp.addEventListener('input', () => {
+      const v = inp.value.trim(); out.textContent = v || '（在下面寫上你的名字）'; out.classList.toggle('empty', !v);
+      document.getElementById('cert').setAttribute('aria-label', `${c.title}：${v || '尚未填寫名字'}`);
+      try { localStorage.setItem(NAME_KEY, v); } catch (e) { /* 略過 */ }
+    });
+    document.getElementById('certPrint').onclick = () => { if (!inp.value.trim()) { inp.focus(); inp.placeholder = '先寫上名字喔！'; return; } PTCG.sfx('level_clear'); setTimeout(() => PTCG.printOnly(document.getElementById('cert')), 150); };
+  }
+  document.getElementById('certPick').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; pick = b.dataset.k; drawCert(); document.querySelector(`#certPick [data-k=${pick}]`).focus(); });
+  drawCert();
 })();
 </script>
 </body>

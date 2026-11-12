@@ -23,9 +23,10 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="assets/fonts/huninn.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/notosanstc-900.woff2" as="font" type="font/woff2" crossorigin>
+<script id="swfix">try{var w=navigator.serviceWorker;if(w&&w.controller)w.addEventListener("controllerchange",function(){if(typeof PTCG==="undefined"||PTCG.BUILD!=="fd4d826b")location.reload()})}catch(e){}</script>
 <!-- /seo -->
 <title>寶可夢卡牌訓練營</title>
-<link rel="stylesheet" href="assets/css/style.min.css">
+<link rel="stylesheet" href="assets/css/style.min.css?v=fd4d826b">
 <style>
   html,body{height:100%;overflow:hidden;background:#BFE3FF}
   #world{position:fixed;inset:0;touch-action:none}
@@ -113,11 +114,11 @@
     setTimeout(function(){ if(document.getElementById('loading') && !window.__villageOK) fail('等太久了。請確認已經解壓縮整個資料夾，再打開 index.html。'); }, 20000);
   })();
 </script>
-<script defer src="assets/vendor/three.min.js"></script>
-<script defer src="assets/vendor/three-post.js"></script>
-<script defer src="assets/js/partners3d.js"></script>
-<script defer src="assets/js/audio.js"></script>
-<script defer src="assets/js/common.js"></script>
+<script defer src="assets/vendor/three.min.js?v=fd4d826b"></script>
+<script defer src="assets/vendor/three-post.js?v=fd4d826b"></script>
+<script defer src="assets/js/partners3d.js?v=fd4d826b"></script>
+<script defer src="assets/js/audio.js?v=fd4d826b"></script>
+<script defer src="assets/js/common.js?v=fd4d826b"></script>
 <script>
 /* 先讓載入畫面顯示，再開始建造 3D 世界 */
 addEventListener('DOMContentLoaded', () => requestAnimationFrame(() => setTimeout(() => {

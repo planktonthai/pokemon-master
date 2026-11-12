@@ -660,10 +660,11 @@ const PTCG = (() => {
   }
   /* ---------- 延遲載入 3D（Three.js）：需要時才下載，不拖慢第一次開頁 ---------- */
   const ASSET = ME ? ME.replace(/js\/common\.js.*$/, '') : 'assets/';
+  const BUILD = ((ME || '').match(/[?&]v=(\w+)/) || [])[1] || '';   // 網站版本號（由 build.py 寫在網址上）
   const loaded = {};
   function loadScript(rel) {
     return loaded[rel] || (loaded[rel] = new Promise((ok, bad) => {
-      const el = document.createElement('script'); el.src = ASSET + rel; el.onload = ok; el.onerror = bad; document.head.appendChild(el);
+      const el = document.createElement('script'); el.src = ASSET + rel + (BUILD ? '?v=' + BUILD : ''); el.onload = ok; el.onerror = bad; document.head.appendChild(el);
     }));
   }
   /* 有沒有硬體加速的 WebGL？（軟體繪圖的裝置改用平面版，網址加 ?force3d 可強制開啟） */
@@ -687,6 +688,15 @@ const PTCG = (() => {
     extra.forEach(x => { p = p.then(() => loadScript(x)); });
     return p;
   }
+  /* 只列印頁面上的某一塊（證書、學習報告） */
+  function printOnly(el) {
+    const old = document.getElementById('printArea'); if (old) old.remove();
+    const box = document.createElement('div'); box.id = 'printArea'; box.appendChild(el.cloneNode(true));
+    box.querySelectorAll('[id]').forEach(x => x.removeAttribute('id'));
+    document.body.appendChild(box); document.body.classList.add('print-one');
+    const done = () => { box.remove(); document.body.classList.remove('print-one'); removeEventListener('afterprint', done); };
+    addEventListener('afterprint', done); print();
+  }
   /* 在使用者第一次互動、或頁面空閒一段時間後才執行 */
   function whenIdle(fn, ms = 4000) {
     let done = false;
@@ -702,5 +712,5 @@ const PTCG = (() => {
   if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && ME && !/[?&]sim/.test(location.search)) {
     addEventListener('load', () => navigator.serviceWorker.register(ME.replace(/assets\/js\/common\.js.*$/, 'sw.js')).catch(() => {}));
   }
-  return { hasGPU, load3D, whenIdle, onboarding, getStats, recordBattle, BOSSES, bossBeaten, bossUnlocked, bossWin, go, fighter, damage, setMax, paintHP, lunge, status, mark, coin, choiceGame, cheatButton, PARTNERS, avatar, mini, placeGame, orderGame, yesNoGame, sfx: (n, o) => sfx(n, o), get fast() { return FAST; }, twinkles, UNITS, AVAILABLE, getStars, setStars, totalStars, isUnlocked, energy, card, sparkle, confetti, restart, clouds: clouds2, starPill, Player, quiz };
+  return { BUILD, printOnly, hasGPU, load3D, whenIdle, onboarding, getStats, recordBattle, BOSSES, bossBeaten, bossUnlocked, bossWin, go, fighter, damage, setMax, paintHP, lunge, status, mark, coin, choiceGame, cheatButton, PARTNERS, avatar, mini, placeGame, orderGame, yesNoGame, sfx: (n, o) => sfx(n, o), get fast() { return FAST; }, twinkles, UNITS, AVAILABLE, getStars, setStars, totalStars, isUnlocked, energy, card, sparkle, confetti, restart, clouds: clouds2, starPill, Player, quiz };
 })();

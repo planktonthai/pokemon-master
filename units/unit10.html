@@ -22,9 +22,10 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="../assets/fonts/huninn.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="../assets/fonts/notosanstc-900.woff2" as="font" type="font/woff2" crossorigin>
+<script id="swfix">try{var w=navigator.serviceWorker;if(w&&w.controller)w.addEventListener("controllerchange",function(){if(typeof PTCG==="undefined"||PTCG.BUILD!=="fd4d826b")location.reload()})}catch(e){}</script>
 <!-- /seo -->
 <title>第 10 關：策略運用｜寶可夢卡牌訓練營</title>
-<link rel="stylesheet" href="../assets/css/style.min.css">
+<link rel="stylesheet" href="../assets/css/style.min.css?v=fd4d826b">
 <style>
   .vs2{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;max-width:720px}
   .vs2 .col{background:#fff;border:3px solid var(--ink);border-radius:18px;padding:12px;box-shadow:0 5px 0 var(--ink)}
@@ -40,15 +41,16 @@
 </head>
 <body data-bgm="bgm_volcano" data-zone="volcano">
 <div class="wrap">
-  <div class="topbar">
+  <nav class="topbar" aria-label="網站導覽">
     <a class="btn" href="../index.html?zone=volcano">🗺 回地圖</a>
     <span class="star-pill" aria-live="polite"></span>
-  </div>
+  </nav>
   <header class="unit-head">
     <span class="tag" style="background:var(--lava)">高手火山・第 10 關</span>
     <h1>策略運用</h1>
     <p>最後一關！學會高手的思考方式，準備好去模擬對戰挑戰電腦了嗎？</p>
   </header>
+  <main>
 
   <section class="lesson" id="L1" data-partner="fruit" data-intro="猜贏了硬幣，要選先攻還是後攻呢？">
     <h2><span class="no">1</span>先攻還是後攻？</h2>
@@ -80,10 +82,11 @@
     <h2><span class="no">★</span>過關小測驗</h2>
     <div class="quiz" id="quiz"></div>
   </section>
+  </main>
 </div>
 
-<script src="../assets/js/audio.js"></script>
-<script src="../assets/js/common.js"></script>
+<script src="../assets/js/audio.js?v=fd4d826b"></script>
+<script src="../assets/js/common.js?v=fd4d826b"></script>
 <script>
 (() => {
   const { card, mini, sparkle, restart, Player } = PTCG;

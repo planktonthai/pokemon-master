@@ -22,9 +22,10 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="../assets/fonts/huninn.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="../assets/fonts/notosanstc-900.woff2" as="font" type="font/woff2" crossorigin>
+<script id="swfix">try{var w=navigator.serviceWorker;if(w&&w.controller)w.addEventListener("controllerchange",function(){if(typeof PTCG==="undefined"||PTCG.BUILD!=="fd4d826b")location.reload()})}catch(e){}</script>
 <!-- /seo -->
 <title>第 7 關：特殊狀態｜寶可夢卡牌訓練營</title>
-<link rel="stylesheet" href="../assets/css/style.min.css">
+<link rel="stylesheet" href="../assets/css/style.min.css?v=fd4d826b">
 <style>
   .st-row{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%}
   .st-info{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;min-height:44px}
@@ -33,15 +34,16 @@
 </head>
 <body data-bgm="bgm_canyon" data-zone="canyon">
 <div class="wrap">
-  <div class="topbar">
+  <nav class="topbar" aria-label="網站導覽">
     <a class="btn" href="../index.html?zone=canyon">🗺 回地圖</a>
     <span class="star-pill" aria-live="polite"></span>
-  </div>
+  </nav>
   <header class="unit-head">
     <span class="tag" style="background:var(--canyon)">進階山谷・第 7 關</span>
     <h1>特殊狀態</h1>
     <p>睡眠、麻痺、混亂、中毒、灼傷——五種特殊狀態會讓比賽充滿變化，學會它們就不怕被偷襲！</p>
   </header>
+  <main>
 
   <section class="lesson" id="L1" data-partner="snail" data-intro="有些招式會讓對手陷入「特殊狀態」！">
     <h2><span class="no">1</span>五種特殊狀態</h2>
@@ -73,10 +75,11 @@
     <h2><span class="no">★</span>過關小測驗</h2>
     <div class="quiz" id="quiz"></div>
   </section>
+  </main>
 </div>
 
-<script src="../assets/js/audio.js"></script>
-<script src="../assets/js/common.js"></script>
+<script src="../assets/js/audio.js?v=fd4d826b"></script>
+<script src="../assets/js/common.js?v=fd4d826b"></script>
 <script>
 (() => {
   const { card, mini, sparkle, restart, Player } = PTCG;

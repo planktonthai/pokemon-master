@@ -22,9 +22,10 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="../assets/fonts/huninn.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="../assets/fonts/notosanstc-900.woff2" as="font" type="font/woff2" crossorigin>
+<script id="swfix">try{var w=navigator.serviceWorker;if(w&&w.controller)w.addEventListener("controllerchange",function(){if(typeof PTCG==="undefined"||PTCG.BUILD!=="fd4d826b")location.reload()})}catch(e){}</script>
 <!-- /seo -->
 <title>第 3 關：開始準備｜寶可夢卡牌訓練營</title>
-<link rel="stylesheet" href="../assets/css/style.min.css">
+<link rel="stylesheet" href="../assets/css/style.min.css?v=fd4d826b">
 <style>
   .prep{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%}
   .prep .row{display:flex;gap:18px;align-items:center;justify-content:center;flex-wrap:wrap;min-height:96px}
@@ -41,15 +42,16 @@
 </head>
 <body data-bgm="bgm_grassland" data-zone="grass">
 <div class="wrap">
-  <div class="topbar">
+  <nav class="topbar" aria-label="網站導覽">
     <a class="btn" href="../index.html?zone=grass">🗺 回地圖</a>
     <span class="star-pill" aria-live="polite"></span>
-  </div>
+  </nav>
   <header class="unit-head">
     <span class="tag" style="background:var(--grass)">新手草原・第 3 關</span>
     <h1>開始準備</h1>
     <p>比賽前要洗牌、抽牌、放寶可夢和獎賞卡。學會準備步驟，就能自己開一場比賽！</p>
   </header>
+  <main>
 
   <section class="lesson" id="L1" data-partner="cloud" data-intro="比賽開始前，要先做好準備喔！">
     <h2><span class="no">1</span>比賽前的準備步驟</h2>
@@ -74,10 +76,11 @@
     <h2><span class="no">★</span>過關小測驗</h2>
     <div class="quiz" id="quiz"></div>
   </section>
+  </main>
 </div>
 
-<script src="../assets/js/audio.js"></script>
-<script src="../assets/js/common.js"></script>
+<script src="../assets/js/audio.js?v=fd4d826b"></script>
+<script src="../assets/js/common.js?v=fd4d826b"></script>
 <script>
 (() => {
   const { card, mini, sparkle, restart, Player } = PTCG;

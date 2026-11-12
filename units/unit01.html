@@ -22,9 +22,10 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="../assets/fonts/huninn.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="../assets/fonts/notosanstc-900.woff2" as="font" type="font/woff2" crossorigin>
+<script id="swfix">try{var w=navigator.serviceWorker;if(w&&w.controller)w.addEventListener("controllerchange",function(){if(typeof PTCG==="undefined"||PTCG.BUILD!=="fd4d826b")location.reload()})}catch(e){}</script>
 <!-- /seo -->
 <title>第 1 關：認識卡牌｜寶可夢卡牌訓練營</title>
-<link rel="stylesheet" href="../assets/css/style.min.css">
+<link rel="stylesheet" href="../assets/css/style.min.css?v=fd4d826b">
 <style>
   .tray{display:flex;gap:6px;justify-content:center;min-height:40px;margin-top:10px}
   .pool{display:flex;flex-direction:column;gap:14px}
@@ -37,16 +38,17 @@
 </head>
 <body data-zone="grass">
 <div class="wrap">
-  <div class="topbar">
+  <nav class="topbar" aria-label="網站導覽">
     <a class="btn" href="../index.html?zone=grass">🗺 回地圖</a>
     <span class="star-pill" aria-live="polite"></span>
-  </div>
+  </nav>
 
   <header class="unit-head">
     <span class="tag">新手草原・第 1 關</span>
     <h1>認識卡牌</h1>
     <p>寶可夢卡牌遊戲只有三種卡。看完動畫、答對小測驗，就能拿到星星喔！</p>
   </header>
+  <main>
 
   <!-- 1. 三種卡 -->
   <section class="lesson" id="L1" data-partner="cloud" data-intro="這裡有 3 張蓋著的卡，我們一張一張翻開來看！">
@@ -89,10 +91,11 @@
     <h2><span class="no">★</span>過關小測驗</h2>
     <div class="quiz" id="quiz"></div>
   </section>
+  </main>
 </div>
 
-<script src="../assets/js/audio.js"></script>
-<script src="../assets/js/common.js"></script>
+<script src="../assets/js/audio.js?v=fd4d826b"></script>
+<script src="../assets/js/common.js?v=fd4d826b"></script>
 <script>
 (() => {
   const { card, energy, sparkle, restart, Player } = PTCG;
